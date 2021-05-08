@@ -1,69 +1,146 @@
 #pragma once
 
+#include <type_traits>
+#include <utility>
+#include "syntax.hpp"
 
-namespace aml::adt::dtl
+namespace aml::adt
+{    
+    template<typename Symbol, template<typename...> class SubType>
+    struct link;
+
+    
+    template<typename X>
+    struct hull { using type = X; };
+};
+
+
+namespace aml::adt::dtl::linker
 {
-    template<bool>
-    struct lazy_bool;
+    template<typename T>
+    struct extract_subtype_template_from;
 
-    template<>
-    struct lazy_bool<true>
+    
+    template<typename Symbol, template<typename...> class SubType>
+    struct extract_subtype_template_from<link<Symbol, SubType> >
     {
-        struct type;
+        template<typename... x>
+        using apply_to = SubType<x...>;
     };
 
-    template<bool b>
-    using sfinae = typename lazy_bool<b>::type;  // same as std::enable_if_t<b>
+    
+    template<typename... lookup_failure>
+    struct resolve_symbol
+    {
+        struct type
+        {
+            static_assert( (sizeof...(lookup_failure) > 1), "symbol could not be found");
+        };
+    };
+
+    
+    template<typename symbol,
+             typename    x_h, template<typename...> class    y_h,
+             typename... x_t, template<typename...> class... y_t>
+    struct resolve_symbol<symbol, link<x_h, y_h>, link<x_t, y_t>... >
+    {
+        using type = typename
+            std::conditional_t
+            <
+                std::is_same<symbol, x_h>::value,
+                hull<link<x_h, y_h> >,
+                resolve_symbol<symbol, link<x_t, y_t>... >
+            >::type;
+
+        template<typename... X>
+        using resolve_with = typename extract_subtype_template_from<type>::template apply_to<X...>;
+    };
+
+
+    template<typename Linker>
+    struct add_linker_visibility
+    {
+        using linker = Linker;
+    };
 }
 
 
 namespace aml::adt
 {    
-    template<typename...> class linker;
-    
-    template<template<typename...> class... Subtypes>
-    struct subtypes_
+    template<template<typename...> class Adt>
+    struct trivially_linked
     {
-        template<typename... x>
-        using link_with_parameters = typename linker< subtypes_<Subtypes...>, x...>::algebraic_type;
+        template<typename, typename... Args>
+        using t = Adt<Args...>; 
     };
 
     
-    template<typename... Subtypes>
-    using subtypes = subtypes_<Subtypes::template apply_to...>;
-        
+    template<typename...> class linker;
+
+
+    template<typename... > struct signatures;
+
+    
+    template<typename... Symbol, template<typename...> class Subtype>
+    struct signatures< link<Symbol, Subtype>... >
+    {
+        template<typename... X>
+        using link_with_parameters = typename linker< signatures< link<Symbol, Subtype>... >, X...>::algebraic_type;
+    };
+
     
     template
     <
-        typename...                    Parameters,
-        template<typename...> class... Subtypes
+        typename...                    Symbol,
+        template<typename...> class... Subtype,
+        typename...                    Parameters
     >
-    struct linker< subtypes_<Subtypes...>, Parameters... >
+    struct linker< signatures< link<Symbol, Subtype>... >, Parameters... >    
     {
+    private:
+        using this_linker = linker< signatures< link<Symbol, Subtype>... >, Parameters... > ;
+    public:        
         struct algebraic_type
         :
-            public Subtypes< linker<subtypes_<Subtypes...>, Parameters... >, Parameters... >...
+            public Subtype<this_linker, Parameters... >... ,
+            public dtl::linker::add_linker_visibility<linker< signatures< link<Symbol, Subtype>... >, Parameters... > >
         {
+            template<typename Symbol_>
+            using subtype = dtl::linker::resolve_symbol<Symbol_, link<Symbol, Subtype>... >;
+
+
             constexpr algebraic_type() = default;
 
             template<typename Other>
             constexpr algebraic_type(Other&& other)
             :
-                Subtypes< linker<subtypes_<Subtypes...>, Parameters... >, Parameters... >(static_cast<Other&&>(other))...
+                Subtype< this_linker, Parameters... >(static_cast<Other&&>(other))...
             { }
 
-            template<typename... Args, typename dtl::sfinae< (sizeof...(Args) > 1) > >
+            template<typename... Args, typename = std::enable_if_t< (sizeof...(Args) > 1) > >
             constexpr algebraic_type(Args&&... args)
             :
-                Subtypes< linker<subtypes_<Subtypes...>, Parameters... >, Parameters... >(static_cast<Args&&>(args))...
+                Subtype< this_linker, Parameters... >(static_cast<Args&&>(args))...
             { }
 
-            algebraic_type& operator=(algebraic_type const&) = default;
-            algebraic_type& operator=(algebraic_type&&)      = default;                
+            constexpr algebraic_type& operator=(algebraic_type const&) = default;
+            constexpr algebraic_type& operator=(algebraic_type&&)      = default;                
+
+            
+            template<typename Symbol_>
+            constexpr auto const& csubref() const { return static_cast< subtype<Symbol_> const& >(*this); }
+
+            
+            template<typename Symbol_>
+            constexpr auto const& subref() const { return csubref(); }
+
+
+            template<typename Symbol_>
+            constexpr auto& subref() { return static_cast< subtype<Symbol_>& >(*this); }
         };
 
-        template<typename... x>
-        using abstract_type = typename linker< subtypes_<Subtypes...>, x... >::algebraic_type;
         
+        template<typename... X>
+        using abstract_type = typename linker< signatures< link<Symbol, Subtype>... >, X... >::algebraic_type;
     };  
 }

@@ -37,10 +37,14 @@ namespace aml::adt::dtl::linker
     };
 
     
-    template<typename symbol,
-             typename    x_h, template<typename...> class    y_h,
-             typename... x_t, template<typename...> class... y_t>
-    struct resolve_symbol<symbol, link<x_h, y_h>, link<x_t, y_t>... >
+    template
+    <
+        typename Linker,
+        typename symbol,
+        typename    x_h, template<typename...> class    y_h,
+        typename... x_t, template<typename...> class... y_t
+    >
+    struct resolve_symbol<Linker, symbol, link<x_h, y_h>, link<x_t, y_t>... >
     {
         using type = typename
             std::conditional_t
@@ -51,7 +55,7 @@ namespace aml::adt::dtl::linker
             >::type;
 
         template<typename... X>
-        using with = typename extract_subtype_template_from<type>::template apply_to<X...>;
+        using with = typename extract_subtype_template_from<type>::template apply_to<Linker, X...>;
     };
 
 
@@ -100,7 +104,7 @@ namespace aml::adt
         using this_linker = linker< signatures< link<Symbol, Subtype>... >, Parameters... > ;
     public:        
         template<typename Symbol_, typename... Args>
-        using subtype = typename dtl::linker::resolve_symbol<Symbol_, link<Symbol, Subtype>... >::template with<Args...>;
+        using subtype = typename dtl::linker::resolve_symbol<this_linker, Symbol_, link<Symbol, Subtype>... >::template with<Args...>;
 
 
         struct algebraic_type

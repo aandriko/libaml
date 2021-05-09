@@ -1,85 +1,46 @@
-#include "adt/linker.hpp"
-/*
-#include "adt/term.hpp"
-#include "syntax.hpp"
+// clang++ -std=c++20 -Wall -pedantic -I../include t0.cpp
+
+#include <boost/core/demangle.hpp>
+#include <iostream>
+
+#include "aml/subtype/linker.hpp"
+#include "aml/subtype/term.hpp"
+#include "aml/subtype/list.hpp"
 
 
-namespace aml::sig
-{
-    template<typename Link, typename... Subterms>
-    struct subterms
-    {
-    public:
-        template<template<typename...> class Function>
-        using apply = Function<Subterms...>;
-
-        
-        template<template<typename...> class Function>
-        using pointwise_apply = 
-            typename syntax::subterms< Function<Subterms>... >::template apply< Link::template abstract_type  >;
-
-    };
-      
-   
-
-    template<typename Link, typename... x>
-    struct modify_front_and_back
-    {
-        template<typename... y>
-        using push_front = typename Link::template abstract_type<y..., x...>;
-
-        template<typename... y>
-        using push_back = typename Link::template abstract_type<x..., y...>;
-    };
-
-
-    template<typename Link, typename... x>
-    struct cons_list;
-
-    
-    template<typename Link>
-    struct cons_list<Link>
-    {
-        using tail = typename Link::template abstract_type<>;
-    };
-
-
-    template<typename Link, typename h, typename... t>
-    struct cons_list<Link, h, t...>
-    {
-        using head = h;
-        using tail = typename Link::template abstract_type<t...>;
-    };
-}
-
-
-
-
+using aml::operator""_;
 
 template<typename... x>
-using list = typename
-    aml::adt::subtypes
-    <
-       aml::sig::subterms,
-       aml::sig::modify_front_and_back,
-       aml::sig::cons_list
-    >::template link_with_parameters<x...>;
+using term = aml::adt::signatures
+             <
+                 aml::adt::link<decltype("list"_), aml::adt::list>,
+                 aml::adt::link<decltype("term"_), aml::adt::term>
+             >::link_with<x...>;
 
 
+template<typename... >
+struct foo { };
 
 
-template<typename x>
-using term = typename
-    aml::adt::subtypes
-    <
-    aml::adt::term_t,
-    aml::adt::trivially_linked< ::list>::template t
-    >::template link_with_parameters<>::template subtype<   aml::adt::term_t  >::template with_parameters<x>;
+template<template<typename...> class F>
+struct Template { };
 
-*/
+template<typename...>
+struct Parameters { };
+
 int main()
 {
-    //  list<char, int>::push_back<void>::head s;
-    //    term<int>::function<void> t;
-    //    term<int> t;
+    using type = foo<foo<int, char, foo<> > >;
+    using term_t = term<type>;
+
+    
+    std::cout << boost::core::demangle( typeid(term_t::function<>).name()  ) << std::endl;
+    std::cout << boost::core::demangle( typeid(term_t::subterms::apply<Parameters>).name() ) << std::endl;
+    
+    
+    //    static_assert(template_is_equal<term< type >::template function, foo >::vlaue, "");
+    //    static-assert(std::is_equal<
+
+
+    //    std::cout << boost::core::demangle( typeid(t).name() ) << std::endl;
 }

@@ -133,6 +133,9 @@ namespace aml
             public Subtype<this_linker, Parameters... >... ,
             public dtl::linker::add_linker_visibility<this_linker>
         {
+            using structure = this_linker;
+
+            
             template<typename Symbol_>
             using subtype = typename this_linker::template subtype<Symbol_, Parameters...>;
 

@@ -42,7 +42,10 @@ namespace aml::type
     struct parameters
     {
         template<template<typename...> class F>
-        using apply = F<Type...>;        
+        using apply = F<Type...>;
+
+        template<template<typename...> class F>
+        using pointwise_apply = parameters<F<Type>...>;
     };        
 }
 

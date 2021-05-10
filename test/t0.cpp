@@ -4,28 +4,29 @@
 #include <iostream>
 
 #include "aml/linker.hpp"
-#include "aml/adt/term.hpp"
-#include "aml/adt/list.hpp"
+#include "aml/structure/term.hpp"
+#include "aml/structure/list.hpp"
 
 
 using aml::operator""_;
 
 template<typename... x>
-using term = aml::adt::signatures
+using term = aml::signatures
              <
-                 aml::subtype<decltype("list"_), aml::adt::list>,
-                 aml::subtype<decltype("term"_), aml::adt::term>
+                 aml::subtype<decltype("list"_), aml::structure::list>,
+                 aml::subtype<decltype("term"_), aml::structure::term>
              >::link_with<x...>;
 
 
 template<typename... x>
 using term2 = typename
-    aml::adt::signatures
+    aml::signatures
     <
        aml::subtype<::term<>, ::term >::ignore_linker
     >::
     template link_with<x...>::template subtype< ::term<> >;
-    
+
+
 template<typename... >
 struct foo { };
 

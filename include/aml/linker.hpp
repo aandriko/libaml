@@ -6,7 +6,7 @@
 #include "./parameters.hpp" 
 
 
-namespace aml::adt::dtl::linker
+namespace aml::dtl::linker
 {
     template<template<typename...> class, typename...>
     struct ignore_linker_;
@@ -34,12 +34,12 @@ namespace aml
     template<typename Symbol, template<typename...> class SubType>
     struct subtype
     {
-        using ignore_linker = subtype<Symbol, adt::dtl::linker::fix<SubType>::template ignore_linker>;
+        using ignore_linker = subtype<Symbol, dtl::linker::fix<SubType>::template ignore_linker>;
     };
 }
 
 
-namespace aml::adt::dtl::linker
+namespace aml::dtl::linker
 {
     template<typename T>
     struct extract_subtype_template_from;
@@ -95,7 +95,7 @@ namespace aml::adt::dtl::linker
 }
 
 
-namespace aml::adt
+namespace aml
 {        
     template<typename...> struct linker;
 
@@ -111,18 +111,7 @@ namespace aml::adt
                 X...
             >::algebraic_type;
     };
-        
-    
-    /*
-    template<typename... Symbol, template<typename...> class... Subtype>
-    struct signatures< link<Symbol, Subtype>... >
-    {
-        template<typename... X>
-        using link_with = typename linker< signatures< link<Symbol, Subtype>... >, X...>::algebraic_type;
-    };
-    */
-
-    
+            
        
     template
     <
@@ -130,10 +119,10 @@ namespace aml::adt
         template<typename...> class... Subtype,
         typename...                    Parameters
     >
-    struct linker< signatures< subtype<Symbol, Subtype>... >, Parameters... >    
+    struct linker< signatures< aml::subtype<Symbol, Subtype>... >, Parameters... >    
     {
     private:
-        using this_linker = linker< signatures< subtype<Symbol, Subtype>... >, Parameters... > ;
+        using this_linker = linker< signatures< aml::subtype<Symbol, Subtype>... >, Parameters... > ;
     public:        
         template<typename Symbol_, typename... Args>
         using subtype = typename dtl::linker::resolve_symbol<this_linker, Symbol_, aml::subtype<Symbol, Subtype>... >::template with<Args...>;
@@ -142,7 +131,6 @@ namespace aml::adt
         struct algebraic_type
         :
             public Subtype<this_linker, Parameters... >... ,
-            //            public dtl::linker::add_linker_visibility<linker< signatures< subtype<Symbol, Subtype>... >, Parameters... > >
             public dtl::linker::add_linker_visibility<this_linker>
         {
             template<typename Symbol_>

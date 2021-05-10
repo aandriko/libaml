@@ -4,7 +4,7 @@
 #include "../parameters.hpp"
 
 
-namespace aml::adt
+namespace aml::structure
 {
     template<typename...>
     struct list;

@@ -3,13 +3,39 @@
 #include <type_traits>
 #include <utility>
 
-#include "../parameters.hpp" 
+#include "./parameters.hpp" 
 
 
-namespace aml::adt
-{    
+namespace aml::adt::dtl::linker
+{
+    template<template<typename...> class, typename...>
+    struct ignore_linker_;
+
+    
+    template<template<typename...> class F, typename Linker, typename... Args>
+    struct ignore_linker_<F, Linker, Args...>
+    {
+        using type = F<Args...>;
+    };
+
+
+    template<template<typename...> class F>
+    struct fix
+    {
+        template<typename... linker_and_other_args>
+        using ignore_linker = typename ignore_linker_<F, linker_and_other_args...>::type;
+    };
+    
+}
+
+
+namespace aml
+{
     template<typename Symbol, template<typename...> class SubType>
-    struct link;
+    struct subtype
+    {
+        using ignore_linker = subtype<Symbol, adt::dtl::linker::fix<SubType>::template ignore_linker>;
+    };
 }
 
 
@@ -20,13 +46,13 @@ namespace aml::adt::dtl::linker
 
     
     template<typename Symbol, template<typename...> class SubType>
-    struct extract_subtype_template_from<link<Symbol, SubType> >
+    struct extract_subtype_template_from<subtype<Symbol, SubType> >
     {
         template<typename... x>
         using apply_to = SubType<x...>;
     };
 
-    
+            
     template<typename... lookup_failure>
     struct resolve_symbol
     {
@@ -44,14 +70,16 @@ namespace aml::adt::dtl::linker
         typename    x_h, template<typename...> class    y_h,
         typename... x_t, template<typename...> class... y_t
     >
-    struct resolve_symbol<Linker, symbol, link<x_h, y_h>, link<x_t, y_t>... >
+    struct resolve_symbol<Linker, symbol, aml::subtype<x_h, y_h>, aml::subtype<x_t, y_t>... >
     {
         using type = typename
             std::conditional_t
             <
                 std::is_same<symbol, x_h>::value,
-                type::hull<link<x_h, y_h> >,
-                resolve_symbol<symbol, link<x_t, y_t>... >
+
+                type::hull<aml::subtype<x_h, y_h> >,
+
+                resolve_symbol<symbol, aml::subtype<x_t, y_t>... >
             >::type;
 
         template<typename... X>
@@ -68,27 +96,31 @@ namespace aml::adt::dtl::linker
 
 
 namespace aml::adt
-{    
-    template<template<typename...> class Adt>
-    struct trivially_linked
-    {
-        template<typename, typename... Args>
-        using t = Adt<Args...>; 
-    };
-
-    
+{        
     template<typename...> struct linker;
 
 
-    template<typename... > struct signatures;
-
-
+    template<typename... Signatures>
+    struct signatures
+    {
+        template<typename... X>
+        using link_with = typename
+            linker
+            <
+                signatures<Signatures... >,
+                X...
+            >::algebraic_type;
+    };
+        
+    
+    /*
     template<typename... Symbol, template<typename...> class... Subtype>
     struct signatures< link<Symbol, Subtype>... >
     {
         template<typename... X>
         using link_with = typename linker< signatures< link<Symbol, Subtype>... >, X...>::algebraic_type;
     };
+    */
 
     
        
@@ -98,19 +130,20 @@ namespace aml::adt
         template<typename...> class... Subtype,
         typename...                    Parameters
     >
-    struct linker< signatures< link<Symbol, Subtype>... >, Parameters... >    
+    struct linker< signatures< subtype<Symbol, Subtype>... >, Parameters... >    
     {
     private:
-        using this_linker = linker< signatures< link<Symbol, Subtype>... >, Parameters... > ;
+        using this_linker = linker< signatures< subtype<Symbol, Subtype>... >, Parameters... > ;
     public:        
         template<typename Symbol_, typename... Args>
-        using subtype = typename dtl::linker::resolve_symbol<this_linker, Symbol_, link<Symbol, Subtype>... >::template with<Args...>;
+        using subtype = typename dtl::linker::resolve_symbol<this_linker, Symbol_, aml::subtype<Symbol, Subtype>... >::template with<Args...>;
 
 
         struct algebraic_type
         :
             public Subtype<this_linker, Parameters... >... ,
-            public dtl::linker::add_linker_visibility<linker< signatures< link<Symbol, Subtype>... >, Parameters... > >
+            //            public dtl::linker::add_linker_visibility<linker< signatures< subtype<Symbol, Subtype>... >, Parameters... > >
+            public dtl::linker::add_linker_visibility<this_linker>
         {
             template<typename Symbol_>
             using subtype = typename this_linker::template subtype<Symbol_, Parameters...>;
@@ -147,7 +180,7 @@ namespace aml::adt
 
         
         template<typename... X>
-        using abstract_type = typename linker< signatures< link<Symbol, Subtype>... >, X... >::algebraic_type;
+        using abstract_type = typename linker< signatures< aml::subtype<Symbol, Subtype>... >, X... >::algebraic_type;
     };
 
 }

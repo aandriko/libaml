@@ -3,6 +3,7 @@
 #include <boost/core/demangle.hpp>
 #include <iostream>
 
+#include "aml/select.hpp"
 #include "aml/linker.hpp"
 #include "aml/structure/term.hpp"
 #include "aml/structure/list.hpp"
@@ -54,4 +55,8 @@ int main()
 
 
     //    std::cout << boost::core::demangle( typeid(t).name() ) << std::endl;
+
+    using t3 = aml::select<2, 4, 2>::from<int, char, double, void>;
+
+
 }

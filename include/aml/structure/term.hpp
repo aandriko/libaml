@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../exponents.hpp"
+#include "../exponent.hpp"
 #include "../string.hpp"
 
 namespace aml::structure

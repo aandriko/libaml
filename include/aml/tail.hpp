@@ -1,23 +1,22 @@
 #pragma once
 
-namespace aml::lazy
+namespace aml
 {
     template<typename...>
     struct tail;
+
+
+    template<>
+    struct tail<> {};
 
     
     template<typename H, typename... T>
     struct tail<H, T...>
     {
         template<template<typename...> class F>
-        using apply_to = F<T...>;
-    };
+        using apply = F<T...>;
 
+        //        using type = tail<T...>;
+    };
     
-    template<>
-    struct tail<>
-    {
-        template<template<typename...> class F>
-        using apply = F<>;
-    };    
 }

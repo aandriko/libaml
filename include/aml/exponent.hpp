@@ -2,19 +2,7 @@
 
 #include <type_traits>
 
-
-namespace aml::lazy
-{
-    template<typename... X>
-    struct identity;
-
-    template<typename X, typename... nothing>
-    struct identity<X, nothing...>
-    {
-        static_assert(sizeof...(nothing) == 0, "The identity functor cannot take more than one parameter.");        
-        using type = X;
-    };
-}
+#include "./head.hpp"
 
 
 namespace aml
@@ -29,12 +17,11 @@ namespace aml
                       std::is_same< decltype(infinity), decltype(n) >::value, "");
     };    
 
-    template<typename... X>
-    using identity = typename lazy::identity<X...>::type;
+
 }
 
 
-namespace aml::type::dtl
+namespace aml::dtl
 {
     template<typename X, typename R = typename X::type>
     constexpr R add_type_if_possible_(void*, void*);
@@ -54,12 +41,29 @@ namespace aml::type::dtl
 }
 
 
-namespace aml::type::lazy
+namespace aml::lazy
 {
- 
-    template<typename N, typename>
+    template<typename... X>
+    struct identity
+    {
+        static_assert(sizeof...(X) == 1, "The identity functor can only take exactly one parameter.");        
+        using type = typename head<X...>::type;
+    };
+
+
+    template<typename...>
     struct power;
 
+    // power<exp<0>, T> == T
+    //
+    // power<exp<n>, T> == T::type .... ::type    (n-times type)
+    //
+    // power<exp<infinty>, T> == power<exp<n>, T>,
+    // with n chosen to satisfy one of the following condtions A, B:
+    //   A: power<exp<n>, T>::type == power<exp<n>, T>
+    //   or
+    //   B: power<exp<n>, T>::type does not exist.
+    
     
     template<typename T>
     struct power<exp<0>, T>
@@ -79,7 +83,7 @@ namespace aml::type::lazy
     struct power< aml::exp<aml::infinity>, T>
     {
     private:
-        using next_T   = type::dtl::if_possible_add_type_to<T>;
+        using next_T   = dtl::if_possible_add_type_to<T>;
         using next_exp = std::conditional_t < std::is_same<T, next_T>::value, exp<0>, exp<infinity> >;
 
     public:
@@ -88,10 +92,14 @@ namespace aml::type::lazy
 }
 
 
-namespace aml::type
+namespace aml
 {    
-    template<typename N, typename T>
-    using power = typename lazy::power<N, T>::type;    
+    template<typename... X>
+    using identity = typename lazy::identity<X...>::type;
+
+
+    template<typename... Exponent_and_Type>
+    using power = typename lazy::power<Exponent_and_Type...>::type;    
 }
 
 
@@ -105,7 +113,22 @@ namespace aml::function
     struct power<aml::exp<n>, F>
     {
         template<typename... X>
-        using apply_to = typename aml::type::lazy::power<exp<n-1>, aml::type::dtl::state<F, F<X...> > >::type::result;
+        using apply_to = typename
+            aml::lazy::power
+            <
+                exp<n-1>,
+            
+                aml::dtl::state<F, F<X...> >
+            
+            >::type::result;
+    };
+
+
+    template<template<typename...> class F>
+    struct power<aml::exp<1>, F>
+    {
+        template<typename... X>
+        using apply_to = F<X...>;
     };
 
 
@@ -121,6 +144,6 @@ namespace aml::function
     struct power< aml::exp<aml::infinity>, F>
     {
         template<typename... X>
-        using apply_to = typename type::lazy::power<aml::exp<aml::infinity>, aml::type::dtl::state<F, F<X...> > >::type::result;
+        using apply_to = typename lazy::power<aml::exp<aml::infinity>, aml::dtl::state<F, F<X...> > >::type::result;
     };
 }

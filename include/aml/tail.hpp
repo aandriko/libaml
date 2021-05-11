@@ -15,8 +15,6 @@ namespace aml
     {
         template<template<typename...> class F>
         using apply = F<T...>;
-
-        //        using type = tail<T...>;
     };
     
 }

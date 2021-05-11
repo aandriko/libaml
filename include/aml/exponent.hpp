@@ -32,12 +32,16 @@ namespace aml::dtl
     template<typename X>
     using if_possible_add_type_to = decltype( add_type_if_possible_<X>(nullptr, nullptr) );
 
+
     template<template<typename...> class F, typename X>
     struct state
     {
         using type   = state<F, F<X> >;
         using result = X;
     };
+
+
+
 }
 
 
@@ -75,7 +79,7 @@ namespace aml::lazy
     template<int n, typename T>
     struct power<aml::exp<n>, T>
     {
-        using type = power<exp<n-1>, typename T::type>;
+        using type = typename power<exp<n-1>, typename T::type>::type;
     };
 
     
@@ -95,11 +99,12 @@ namespace aml::lazy
 namespace aml
 {    
     template<typename... X>
-    using identity = typename lazy::identity<X...>::type;
+    using identity = typename aml::lazy::identity<X...>::type;
 
 
     template<typename... Exponent_and_Type>
-    using power = typename lazy::power<Exponent_and_Type...>::type;    
+    using power = typename aml::lazy::power<Exponent_and_Type...>::type;    
+
 }
 
 
@@ -112,23 +117,17 @@ namespace aml::function
     template<int n, template<typename...> class F>
     struct power<aml::exp<n>, F>
     {
+        static_assert(n>0, "");
+        
         template<typename... X>
         using apply_to = typename
-            aml::lazy::power
+            aml::power
             <
                 exp<n-1>,
             
                 aml::dtl::state<F, F<X...> >
             
-            >::type::result;
-    };
-
-
-    template<template<typename...> class F>
-    struct power<aml::exp<1>, F>
-    {
-        template<typename... X>
-        using apply_to = F<X...>;
+            >::result;
     };
 
 

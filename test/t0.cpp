@@ -38,6 +38,12 @@ struct Template { };
 template<typename...>
 struct Parameters { };
 
+template<int n>
+struct tt
+{
+    using type = tt<n+1>;
+};
+
 int main()
 {
     using type = foo<foo<int, char, foo<> > >;
@@ -56,7 +62,9 @@ int main()
 
     //    std::cout << boost::core::demangle( typeid(t).name() ) << std::endl;
 
-    using t3 = aml::select<2, 4, 2>::from<int, char, double, void>;
+    //    using t3 = aml::select<2, 4, 2>::from<int, char, double, void>;
 
+    using t4 = aml::power<aml::exp<1>, tt<0>>;
 
+    std::cout << boost::core::demangle(typeid(t4).name()) << std::endl;
 }

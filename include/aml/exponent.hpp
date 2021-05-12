@@ -2,7 +2,7 @@
 
 #include <type_traits>
 
-#include "./head.hpp"
+#include "./conslist.hpp"
 
 
 namespace aml
@@ -32,16 +32,6 @@ namespace aml::dtl
     template<typename X>
     using if_possible_add_type_to = decltype( add_type_if_possible_<X>(nullptr, nullptr) );
 
-
-    template<template<typename...> class F, typename X>
-    struct state
-    {
-        using type   = state<F, F<X> >;
-        using result = X;
-    };
-
-
-
 }
 
 
@@ -51,7 +41,7 @@ namespace aml::lazy
     struct identity
     {
         static_assert(sizeof...(X) == 1, "The identity functor can only take exactly one parameter.");        
-        using type = typename head<X...>::type;
+        using type = typename conslist<X... >::head;
     };
 
 
@@ -117,17 +107,11 @@ namespace aml::function
     template<int n, template<typename...> class F>
     struct power<aml::exp<n>, F>
     {
-        static_assert(n>0, "");
+        static_assert(n != 0, "");
         
         template<typename... X>
-        using apply_to = typename
-            aml::power
-            <
-                exp<n-1>,
-            
-                aml::dtl::state<F, F<X...> >
-            
-            >::result;
+        using apply_to =
+            typename power<aml::exp<n-1>, F>::template apply_to<F<X...> >;
     };
 
 
@@ -142,7 +126,14 @@ namespace aml::function
     template<template<typename...> class F>
     struct power< aml::exp<aml::infinity>, F>
     {
+        template<typename Z>
+        struct state
+        {
+            using type = state<F<Z> >;
+            using result = Z;
+        };
+
         template<typename... X>
-        using apply_to = typename lazy::power<aml::exp<aml::infinity>, aml::dtl::state<F, F<X...> > >::type::result;
+        using apply_to = typename aml::power< aml::exp<aml::infinity>, state< F<X...> > >::result;
     };
 }

@@ -47,6 +47,39 @@ struct tt
 template<typename...> class F { };
 
 
+template<int n, typename X>
+struct numbered_item;
+
+template<typename... T>
+struct make_indexed_;
+
+template<typename T, typename ConsList>
+struct make_indexed_<T, ConsList>
+{
+    using type = 
+        typename ConsList::template cons< numbered_item< ConsList::size(), T> > ;
+};
+
+/*
+struct fold_stop;
+
+
+template<typename T>
+struct make_indexed_<T, fold_stop>
+{
+    using type = aml::conslist< numbered_item<0, T> >;
+};
+*/
+
+template<typename... T>
+using make_indexed = typename make_indexed_<T...>::type;
+
+
+//using delme = make_indexed<>
+
+//using numbered = aml::conslist<int, char, double>::fold_with<make_indexed, aml::conslist<> >::on_the_right;
+    ;
+
 int main()
 {
     using type = foo<foo<int, char, foo<> > >;
@@ -74,7 +107,9 @@ int main()
 
     using t3 = aml::select<2, 4, 2>::from<int, char, double, void, char*, void*>::with_collector<aml::conslist>;
 
-    std::cout << boost::core::demangle( typeid(t3*).name() )  << std::endl;
+    //    std::cout << boost::core::demangle( typeid(t3*).name() )  << std::endl;
+
+    //    std::cout << "fold: " << boost::core::demangle(typeid(numbered*).name()) << std::endl;
     
     //    using t3 = aml::function::power< aml::exp<0>, F >::apply_to<char**>;
 

@@ -44,8 +44,11 @@ namespace aml::type
         template<template<typename...> class F>
         using apply = F<Type...>;
 
-        template<template<typename...> class F>
-        using pointwise_apply = parameters<F<Type>...>;
+        //        template<template<typename...> class F>
+        //        using pointwise_apply_one = parameters<F<Type>...>;
+
+        // template<template<typename...> class... F>
+        // using pointwise_apply = parameters<F<Type>...>;
     };        
 }
 
@@ -66,6 +69,7 @@ namespace aml::object
     struct parameters
     {
         using as_types = type::parameters< object::hull<Object>... >;
+
         
         template<template<auto...> class F>
         using apply = F<Object...>;

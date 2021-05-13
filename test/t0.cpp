@@ -50,35 +50,31 @@ template<typename...> class F { };
 template<int n, typename X>
 struct numbered_item;
 
-template<typename... T>
-struct make_indexed_;
-
-template<typename T, typename ConsList>
-struct make_indexed_<T, ConsList>
-{
-    using type = 
-        typename ConsList::template cons< numbered_item< ConsList::size(), T> > ;
-};
-
-/*
-struct fold_stop;
 
 
-template<typename T>
-struct make_indexed_<T, fold_stop>
-{
-    using type = aml::conslist< numbered_item<0, T> >;
-};
-*/
 
-template<typename... T>
-using make_indexed = typename make_indexed_<T...>::type;
+template<typename X, typename ConsList>
+using make_right_indexed = typename ConsList::template cons< numbered_item< ConsList::size(), X> > ;
+
+template<typename ConsList, typename X>
+using make_left_indexed = make_right_indexed<X, ConsList>;
+
 
 
 //using delme = make_indexed<>
 
-//using numbered = aml::conslist<int, char, double>::fold_with<make_indexed, aml::conslist<> >::on_the_right;
+//using numbered = aml::conslist<int, char, double>::fold_with<make_indexed >::on_the_right;
+
+using numbered_right = aml::conslist<int, char, double>::rfold_with<make_right_indexed, aml::conslist<> >;
+using numbered_left = aml::conslist<int, char, double>::lfold_with<make_left_indexed, aml::conslist<> >;
+using numbered_nicely = aml::conslist<int, char, double>::reverse::lfold_with<make_left_indexed, aml::conslist<> >::reverse;
+
     ;
+//using numbered = make_indexed<int, make_indexed<double, aml::conslist<> > >;
+
+//using n2 = make_indexed<double, aml::conslist<>::fold_with<make_indexed, aml::conslist<> >::on_the_right >;
+    //    aml::conslist<double>::fold_with<make_indexed, aml::conslist<> >::on_the_right;
+
 
 int main()
 {
@@ -98,18 +94,18 @@ int main()
 
     static_assert(std::is_same<t1, char>::value, "");
 
-    //    using t2 = aml::head<int, void, char>;
 
-    //    using t3 = aml::identity<int>;
+    using t2 = aml::select<2, 4, 2>::from<int, char, double, void, char*, void*>::with_collector<aml::conslist>;
 
-    //    t2 zzzz = 5;
-    //static_assert(std::is_same<t2, int>::value, "");
+    std::cout << boost::core::demangle( typeid(t2).name() )  << std::endl;
 
-    using t3 = aml::select<2, 4, 2>::from<int, char, double, void, char*, void*>::with_collector<aml::conslist>;
 
-    //    std::cout << boost::core::demangle( typeid(t3*).name() )  << std::endl;
+    //    using t3 = numbered;
 
-    //    std::cout << "fold: " << boost::core::demangle(typeid(numbered*).name()) << std::endl;
+    
+    std::cout << "          left fold:  " << boost::core::demangle(typeid(numbered_left*).name()) << std::endl;
+    std::cout << "          right fold: " << boost::core::demangle(typeid(numbered_right*).name()) << std::endl;
+    std::cout << "nicely numbered fold: " << boost::core::demangle(typeid(numbered_nicely*).name()) << std::endl;
     
     //    using t3 = aml::function::power< aml::exp<0>, F >::apply_to<char**>;
 

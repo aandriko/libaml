@@ -2,7 +2,7 @@
 
 
 namespace aml
-{
+{           
     template<typename...>
     struct conslist;
 
@@ -25,16 +25,18 @@ namespace aml
         template<template<typename...> class F>
         using apply = F<>;
 
-
-        template<template<typename...> class, typename Z>
-        struct fold_with
-        {
-            using on_the_right = Z;
-            using on_the_left  = Z;
-        };
-
+        
         using reverse = conslist<>;
 
+
+        template<template<typename...> class, typename Z>
+        using rfold_with = Z;
+
+
+        template<template<typename...> class, typename Z>
+        using lfold_with = Z;
+                 
+        
         static constexpr auto size() { return 0; }
     };
 
@@ -58,18 +60,19 @@ namespace aml
         using apply = F<H, T...>;
 
         
-        template<template<typename...> class F, typename Z>  
-        struct fold_with
-        {
-            using on_the_right = F<H, typename conslist<T...>::template fold_with<F, Z>::on_the_right >;
-            // right fold: F<H, F< .... F<last, z> >... >
-
-            using on_the_left = F< typename conslist<T...>::template fold_with<F, Z>::on_the_left, H>;
-        };
-
-        
         using reverse = typename tail::reverse::template rcons<H>;
 
+        
+        template<template<typename...> class F, typename Z>
+        using rfold_with =
+            F<H, typename conslist<T...>::template rfold_with<F, Z> >;
+
+        
+        template<template<typename...> class F, typename Z>
+        using lfold_with =
+            F<typename conslist<T...>::template lfold_with<F, Z>, H >;
+        
+        
         static auto constexpr size() { return 1 + sizeof...(T); }
     };
 

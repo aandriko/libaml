@@ -71,7 +71,7 @@ using numbered_right = aml::conslist<int, char, double>::rfold_with<make_right_i
 using numbered_left = aml::conslist<int, char, double>::lfold_with<make_left_indexed, aml::conslist<> >;
 using numbered_nicely = aml::conslist<int, char, double>::reverse::lfold_with<make_left_indexed, aml::conslist<> >::reverse;
 
-    ;
+
 //using numbered = make_indexed<int, make_indexed<double, aml::conslist<> > >;
 
 //using n2 = make_indexed<double, aml::conslist<>::fold_with<make_indexed, aml::conslist<> >::on_the_right >;

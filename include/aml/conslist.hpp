@@ -9,11 +9,7 @@ namespace aml
     
     template<>
     struct conslist<>
-    {
-        template<template<typename...> class F>
-        using apply = F<>;
-
-        
+    {        
         template<typename X>
         using cons = conslist<X>;
 
@@ -21,12 +17,12 @@ namespace aml
         template<typename X>
         using rcons = conslist<X>;
 
+        
+        using reverse = conslist<>;
+
 
         template<template<typename...> class F>
         using apply = F<>;
-
-        
-        using reverse = conslist<>;
 
 
         template<template<typename...> class, typename Z>
@@ -35,7 +31,7 @@ namespace aml
 
         template<template<typename...> class, typename Z>
         using lfold_with = Z;
-                 
+        
         
         static constexpr auto size() { return 0; }
     };
@@ -56,11 +52,11 @@ namespace aml
         using tail = conslist<T...>;
 
         
-        template<template<typename...> class F>
-        using apply = F<H, T...>;
+        using reverse = typename tail::reverse::template rcons<H>;
 
         
-        using reverse = typename tail::reverse::template rcons<H>;
+        template<template<typename...> class F>
+        using apply = F<H, T...>;
 
         
         template<template<typename...> class F, typename Z>

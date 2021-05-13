@@ -7,7 +7,7 @@
 namespace aml
 {
     template<auto... idx>
-    struct select
+    struct select_indices
     {
     public:
         template<typename... X>

@@ -1,9 +1,11 @@
 // clang++ -std=c++20 -Wall -pedantic -I../include t0.cpp
 
+
+#include "aml/partition_and_join.hpp"
 #include <boost/core/demangle.hpp>
 #include <iostream>
 
-#include "aml/select.hpp"
+#include "aml/select_indices.hpp"
 #include "aml/linker.hpp"
 #include "aml/structure/term.hpp"
 #include "aml/structure/list.hpp"
@@ -75,16 +77,30 @@ using numbered_nicely = aml::conslist<int, char, double>::reverse::lfold_with<ma
 //using n2 = make_indexed<double, aml::conslist<>::fold_with<make_indexed, aml::conslist<> >::on_the_right >;
     //    aml::conslist<double>::fold_with<make_indexed, aml::conslist<> >::on_the_right;
 
+template<typename T>
+struct pred
+{
+    static constexpr bool eval() { return sizeof(T) == 1; }
+};
+
+using partition_t = aml::partition<char, int, void*, unsigned char, std::nullptr_t>::with<pred>;
+
+using t_join = aml::join< partition_t::accepted, partition_t::rejected, aml::partition<void, void> >;    
+
 
 int main()
 {
+    std::cout << "partition accept: " << boost::core::demangle( typeid(partition_t::accepted* ).name() ) << std::endl
+              << "partition reject: " << boost::core::demangle( typeid(partition_t::rejected* ).name() ) << std::endl << std::endl;
+    
+    
     using type = foo<foo<int, char, foo<> > >;
     using term_t = term<type>;
 
     
     std::cout << boost::core::demangle( typeid(term_t::function<>).name()  ) << std::endl;
     std::cout << boost::core::demangle( typeid(term_t::subterms::apply<Parameters>).name() ) << std::endl;
-
+    std::cout << "t_join: " << boost::core::demangle( typeid(t_join).name() ) << std::endl;
 
     static_assert(std::is_same< ::term2<foo<int> >, ::term<foo<int>> >::value, "" );
     
@@ -95,7 +111,7 @@ int main()
     static_assert(std::is_same<t1, char>::value, "");
 
 
-    using t2 = aml::select<2, 4, 2>::from<int, char, double, void, char*, void*>::with_collector<aml::conslist>;
+    using t2 = aml::select_indices<2, 4, 2>::from<int, char, double, void, char*, void*>::with_collector<aml::conslist>;
 
     std::cout << boost::core::demangle( typeid(t2).name() )  << std::endl;
 

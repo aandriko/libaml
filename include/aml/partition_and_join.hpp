@@ -40,8 +40,8 @@ namespace aml
         template<template<typename...> class>
         struct with
         {
-            using accepted = partition<>;
-            using rejected = partition<>;
+            using accepted = conslist<>;
+            using rejected = conslist<>;
         };
         
     private:
@@ -66,8 +66,8 @@ namespace aml
 
             struct result
             {
-                using accepted = typename Accept::template apply<partition>;
-                using rejected = typename Reject::template apply<partition>;
+                using accepted = Accept;
+                using rejected = Reject;
             };
         };
 

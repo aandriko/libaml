@@ -1,6 +1,7 @@
 // clang++ -std=c++20 -Wall -pedantic -I../include t0.cpp
 
 
+#include "aml/sort.hpp"
 #include "aml/partition_and_join.hpp"
 #include <boost/core/demangle.hpp>
 #include <iostream>
@@ -62,20 +63,10 @@ template<typename ConsList, typename X>
 using make_left_indexed = make_right_indexed<X, ConsList>;
 
 
-
-//using delme = make_indexed<>
-
-//using numbered = aml::conslist<int, char, double>::fold_with<make_indexed >::on_the_right;
-
 using numbered_right = aml::conslist<int, char, double>::rfold_with<make_right_indexed, aml::conslist<> >;
 using numbered_left = aml::conslist<int, char, double>::lfold_with<make_left_indexed, aml::conslist<> >;
 using numbered_nicely = aml::conslist<int, char, double>::reverse::lfold_with<make_left_indexed, aml::conslist<> >::reverse;
 
-
-//using numbered = make_indexed<int, make_indexed<double, aml::conslist<> > >;
-
-//using n2 = make_indexed<double, aml::conslist<>::fold_with<make_indexed, aml::conslist<> >::on_the_right >;
-    //    aml::conslist<double>::fold_with<make_indexed, aml::conslist<> >::on_the_right;
 
 template<typename T>
 struct pred
@@ -85,7 +76,7 @@ struct pred
 
 using partition_t = aml::partition<char, int, void*, unsigned char, std::nullptr_t>::with<pred>;
 
-using t_join = aml::join< partition_t::accepted, partition_t::rejected, aml::partition<void, void> >;    
+using t_join = aml::join< partition_t::accepted, partition_t::rejected, aml::conslist<void, void> >;    
 
 
 int main()
@@ -100,7 +91,7 @@ int main()
     
     std::cout << boost::core::demangle( typeid(term_t::function<>).name()  ) << std::endl;
     std::cout << boost::core::demangle( typeid(term_t::subterms::apply<Parameters>).name() ) << std::endl;
-    std::cout << "t_join: " << boost::core::demangle( typeid(t_join).name() ) << std::endl;
+    //    std::cout << "t_join: " << boost::core::demangle( typeid(t_join).name() ) << std::endl;
 
     static_assert(std::is_same< ::term2<foo<int> >, ::term<foo<int>> >::value, "" );
     
@@ -111,7 +102,7 @@ int main()
     static_assert(std::is_same<t1, char>::value, "");
 
 
-    using t2 = aml::select_indices<2, 4, 2>::from<int, char, double, void, char*, void*>::with_collector<aml::conslist>;
+    using t2 = aml::select_indices<2, 4, 2>::from<int, char, double, void, char*, void*>;
 
     std::cout << boost::core::demangle( typeid(t2).name() )  << std::endl;
 

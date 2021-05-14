@@ -79,8 +79,24 @@ using partition_t = aml::partition<char, int, void*, unsigned char, std::nullptr
 using t_join = aml::join< partition_t::accepted, partition_t::rejected, aml::conslist<void, void> >;    
 
 
+template<typename X, typename Y>
+struct less
+{
+    static constexpr bool eval() { return sizeof(X) < sizeof(Y); }
+};
+
+using tlist = aml::conslist<double, char, float, unsigned char>;
+//using tlist = aml::conslist<char, double>::reverse;
+
+using slist = tlist::template apply< aml::sort >::template with<less>;
+
 int main()
 {
+    std::cout << boost::core::demangle( typeid(tlist***).name() ) << std::endl;
+    std::cout << boost::core::demangle( typeid(slist***).name() ) << std::endl << std::endl;
+    
+        
+    
     std::cout << "partition accept: " << boost::core::demangle( typeid(partition_t::accepted* ).name() ) << std::endl
               << "partition reject: " << boost::core::demangle( typeid(partition_t::rejected* ).name() ) << std::endl << std::endl;
     

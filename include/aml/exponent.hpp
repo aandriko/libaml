@@ -16,22 +16,6 @@ namespace aml
         static_assert(std::is_integral<decltype(n)>::value ||
                       std::is_same< decltype(infinity), decltype(n) >::value, "");
     };    
-
-
-}
-
-
-namespace aml::dtl
-{
-    template<typename X, typename R = typename X::type>
-    constexpr R add_type_if_possible_(void*, void*);
-
-    template<typename X>
-    constexpr X add_type_if_possible_(void*, ...);
-
-    template<typename X>
-    using if_possible_add_type_to = decltype( add_type_if_possible_<X>(nullptr, nullptr) );
-
 }
 
 
@@ -77,7 +61,13 @@ namespace aml::lazy
     struct power< aml::exp<aml::infinity>, T>
     {
     private:
-        using next_T   = dtl::if_possible_add_type_to<T>;
+        template<typename X, typename R = typename X::type>
+        static constexpr R add_type_if_possible_(void*, void*);
+
+        template<typename X>
+        static constexpr X add_type_if_possible_(void*, ...);
+        
+        using next_T   = decltype(add_type_if_possible_<T>(nullptr, nullptr));
         using next_exp = std::conditional_t < std::is_same<T, next_T>::value, exp<0>, exp<infinity> >;
 
     public:

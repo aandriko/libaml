@@ -4,43 +4,36 @@
 #include <utility>
 
 #include "./parameters.hpp" 
-
-
-namespace aml::dtl::linker
-{
-    template<template<typename...> class, typename...>
-    struct ignore_linker_;
-
-    
-    template<template<typename...> class F, typename Linker, typename... Args>
-    struct ignore_linker_<F, Linker, Args...>
-    {
-        using type = F<Args...>;
-    };
-
-
-    template<template<typename...> class F>
-    struct fix
-    {
-        template<typename... linker_and_other_args>
-        using ignore_linker = typename ignore_linker_<F, linker_and_other_args...>::type;
-    };
-    
-}
+#include "./conslist.hpp"
 
 
 namespace aml
 {
+    template<typename...> struct signatures;
+
     template<typename Symbol, template<typename...> class SubType>
     struct subtype
     {
-        using ignore_linker = subtype<Symbol, dtl::linker::fix<SubType>::template ignore_linker>;
+    private:
+        template<typename... X>
+        using ignore_linker_in_subtype = typename conslist<X...>::tail::template apply<SubType>;
+
+        friend struct signatures<>;
+        
+        template<typename... X>
+        using function = SubType<X...>;
+
+        using symbol = Symbol;
+        
+    public:
+        using ignore_linker = subtype<Symbol, ignore_linker_in_subtype>;
     };
 }
 
 
 namespace aml::dtl::linker
 {
+
     template<typename T>
     struct extract_subtype_template_from;
 
@@ -111,7 +104,13 @@ namespace aml
                 X...
             >::algebraic_type;
     };
-            
+
+    template<>
+    struct signatures
+    {
+        //        template<typename Symbol_, typename Subtype>
+        //        using 
+    };
        
     template
     <

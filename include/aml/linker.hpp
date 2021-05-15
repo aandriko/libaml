@@ -5,12 +5,16 @@
 
 #include "./parameters.hpp" 
 #include "./conslist.hpp"
-
+#include "./find.hpp"
 
 namespace aml
 {
+    template<typename...> struct linker;
+
+    
     template<typename...> struct signatures;
 
+    
     template<typename Symbol, template<typename...> class SubType>
     struct subtype
     {
@@ -18,81 +22,23 @@ namespace aml
         template<typename... X>
         using ignore_linker_in_subtype = typename conslist<X...>::tail::template apply<SubType>;
 
-        friend struct signatures<>;
-        
-        template<typename... X>
-        using function = SubType<X...>;
 
-        using symbol = Symbol;
+        friend  struct signatures<>;
+        
+        
+        template<typename Symbol_>
+        static constexpr bool is_indexed_by_symbol() { return std::is_same<Symbol, Symbol_>::value; }
+
         
     public:
         using ignore_linker = subtype<Symbol, ignore_linker_in_subtype>;
-    };
-}
 
-
-namespace aml::dtl::linker
-{
-
-    template<typename T>
-    struct extract_subtype_template_from;
-
-    
-    template<typename Symbol, template<typename...> class SubType>
-    struct extract_subtype_template_from<subtype<Symbol, SubType> >
-    {
-        template<typename... x>
-        using apply_to = SubType<x...>;
-    };
-
-            
-    template<typename... lookup_failure>
-    struct resolve_symbol
-    {
-        struct type
-        {
-            static_assert( (sizeof...(lookup_failure) > 1), "symbol could not be found");
-        };
-    };
-
-    
-    template
-    <
-        typename Linker,
-        typename symbol,
-        typename    x_h, template<typename...> class    y_h,
-        typename... x_t, template<typename...> class... y_t
-    >
-    struct resolve_symbol<Linker, symbol, aml::subtype<x_h, y_h>, aml::subtype<x_t, y_t>... >
-    {
-        using type = typename
-            std::conditional_t
-            <
-                std::is_same<symbol, x_h>::value,
-
-                type::hull<aml::subtype<x_h, y_h> >,
-
-                resolve_symbol<symbol, aml::subtype<x_t, y_t>... >
-            >::type;
-
+        
         template<typename... X>
-        using with = typename extract_subtype_template_from<type>::template apply_to<Linker, X...>;
+        using resolve_with = SubType<X...>;
     };
 
-
-    template<typename Linker>
-    struct add_linker_visibility
-    {
-        using linker = Linker;
-    };
-}
-
-
-namespace aml
-{        
-    template<typename...> struct linker;
-
-
+    
     template<typename... Signatures>
     struct signatures
     {
@@ -105,13 +51,38 @@ namespace aml
             >::algebraic_type;
     };
 
+
     template<>
-    struct signatures
+    struct signatures<>
     {
-        //        template<typename Symbol_, typename Subtype>
-        //        using 
+    private:
+        template<typename...>
+        friend struct linker;
+
+        
+        template<typename Symbol>
+        struct fix_symbol
+        {
+            template<typename Subtype>
+            struct match
+            {
+                static constexpr bool eval()
+                {
+                    return Subtype::template is_indexed_by_symbol<Symbol>();
+                };
+            };
+        };
+
+        
+        template<typename... Symbol>
+        struct check_symbol_existence
+            : public conslist<Symbol...>               
+        {
+            static_assert(sizeof...(Symbol) == 1, "Symbol does not exist");
+        };
     };
-       
+
+    
     template
     <
         typename...                    Symbol,
@@ -122,15 +93,22 @@ namespace aml
     {
     private:
         using this_linker = linker< signatures< aml::subtype<Symbol, Subtype>... >, Parameters... > ;
+
+        
     public:        
         template<typename Symbol_, typename... Args>
-        using subtype = typename dtl::linker::resolve_symbol<this_linker, Symbol_, aml::subtype<Symbol, Subtype>... >::template with<Args...>;
+        using subtype =
+            typename
+            aml::find< signatures<>::fix_symbol<Symbol_>::template match >
+               ::template in< aml::subtype<Symbol, Subtype>... >
+               ::template apply< signatures<>::template check_symbol_existence >
+               ::head
+               ::template resolve_with<Args...>;
 
-
+            
         struct algebraic_type
         :
-            public Subtype<this_linker, Parameters... >... ,
-            public dtl::linker::add_linker_visibility<this_linker>
+            public Subtype<this_linker, Parameters... >... 
         {
             using structure = this_linker;
 

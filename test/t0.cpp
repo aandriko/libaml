@@ -1,6 +1,6 @@
 // clang++ -std=c++20 -Wall -pedantic -I../include t0.cpp
 
-
+#include "aml/find.hpp"
 #include "aml/sort.hpp"
 #include "aml/partition_and_join.hpp"
 #include <boost/core/demangle.hpp>
@@ -67,6 +67,12 @@ using numbered_right = aml::conslist<int, char, double>::rfold_with<make_right_i
 using numbered_left = aml::conslist<int, char, double>::lfold_with<make_left_indexed, aml::conslist<> >;
 using numbered_nicely = aml::conslist<int, char, double>::reverse::lfold_with<make_left_indexed, aml::conslist<> >::reverse;
 
+template<typename T>
+struct is_integral
+{
+    static constexpr bool eval() { return std::is_integral<T>::value; };
+};
+
 
 template<typename T>
 struct pred
@@ -92,6 +98,18 @@ using slist = tlist::template apply< aml::sort >::template with<less>;
 
 int main()
 {
+    std::cout << "::term2: " << std::endl;
+    std::cout << boost::core::demangle(typeid(::term2<foo<int>>*).name()) << std::endl;
+
+    std::cout << "::term: " << std::endl;
+    std::cout << boost::core::demangle(typeid(::term<foo<int>>*).name()) << std::endl;
+
+
+    using ttt = aml::find<is_integral>::in<void*, double, int, long, void*>;
+
+    std::cout << boost::core::demangle(typeid(ttt).name()) << std::endl;
+
+    
     std::cout << boost::core::demangle( typeid(tlist***).name() ) << std::endl;
     std::cout << boost::core::demangle( typeid(slist***).name() ) << std::endl << std::endl;
     
@@ -107,9 +125,11 @@ int main()
     
     std::cout << boost::core::demangle( typeid(term_t::function<>).name()  ) << std::endl;
     std::cout << boost::core::demangle( typeid(term_t::subterms::apply<Parameters>).name() ) << std::endl;
-    //    std::cout << "t_join: " << boost::core::demangle( typeid(t_join).name() ) << std::endl;
+    std::cout << "t_join: " << boost::core::demangle( typeid(t_join).name() ) << std::endl;
 
-    static_assert(std::is_same< ::term2<foo<int> >, ::term<foo<int>> >::value, "" );
+
+    
+    //    static_assert(std::is_same< ::term2<foo<int> >, ::term<foo<int>> >::value, "" );
     
     using t0 = aml::conslist<int, void, char>;
 

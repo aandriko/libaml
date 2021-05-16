@@ -93,37 +93,28 @@ namespace aml::function
     template<typename N, template<typename...> class F>
     struct power;
 
-
-    template<int n, template<typename...> class F>
-    struct power<aml::exp<n>, F>
-    {
-        static_assert(n != 0, "");
-        
-        template<typename... X>
-        using apply_to =
-            typename power<aml::exp<n-1>, F>::template apply_to<F<X...> >;
-    };
-
-
+    
     template<template<typename...> class F>
     struct power<aml::exp<0>, F>
     {
         template<typename... X>
         using apply_to = aml::identity<X...>;
     };
+    
 
-
-    template<template<typename...> class F>
-    struct power< aml::exp<aml::infinity>, F>
+    template<int n, template<typename...> class F>
+    struct power<aml::exp<n>, F>
     {
-        template<typename Z>
+    private:
+        template<typename... Z>
         struct state
         {
-            using type = state<F<Z> >;
-            using result = Z;
+            using type = state<F<Z...> >;
+            using result = typename conslist<Z...>::head;
         };
-
+            
+    public:
         template<typename... X>
-        using apply_to = typename aml::power< aml::exp<aml::infinity>, state< F<X...> > >::result;
+        using apply_to = typename aml::power<aml::exp<n-1>, typename state<X...>::type >::result;
     };
 }

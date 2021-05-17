@@ -137,6 +137,6 @@ int main()
     for ( auto test : test_set )
         test();
 
-    std::cout << __FILE__ << ": " << sizeof(test_set)  << " tests passed." << std::endl;
+    std::cout << __FILE__ << ": " << sizeof(test_set)/sizeof(test_set[0])  << " tests passed." << std::endl;
 
 }

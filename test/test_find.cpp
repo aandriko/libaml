@@ -3,6 +3,8 @@
 
 #include <type_traits>
 
+#include <iostream>
+#include <boost/core/demangle.hpp>
 
 namespace test::find
 {
@@ -23,12 +25,20 @@ namespace test::find
     using r0 = aml::conslist<>;
     using r1 = aml::conslist<int>;
     using r2 = aml::conslist<short int>;
-        
+
+
+   
     void test()
     {
-        static_assert(std::is_same<f0, r0>::value, "");
-        static_assert(std::is_same<f1, r1>::value, "");
-        static_assert(std::is_same<f2, r2>::value, "");
+        std::cout << boost::core::demangle( typeid(f0).name() ) << std::endl;
+        std::cout << boost::core::demangle( typeid(f1).name() ) << std::endl;
+        std::cout << boost::core::demangle( typeid(f2).name() ) << std::endl;
+                static_assert(std::is_same<f0, r0>::value, "");
+              static_assert(std::is_same<f1, r1>::value, "");
+             static_assert(std::is_same<f2, r2>::value, "");
+
+        
+        
     }
 }
 

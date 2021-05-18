@@ -1,5 +1,6 @@
 #pragma once
 
+#include <type_traits>
 
 namespace aml
 {           
@@ -74,6 +75,24 @@ namespace aml
 
     
     template<typename... one_conslist_arg>
+    using head = typename conslist<one_conslist_arg...>::head::head;
+    
+    
+    template<typename... one_conslist_arg>
     using tail = typename conslist<one_conslist_arg...>::head::tail;
     // effect: tail<conslist<h, t...> > == conlist<t...> == conslist<h, t...>::tail
+
+    
+    template<template<typename...> class F>
+    struct fix_function
+    {
+        template<typename... Conslist>
+        using apply_to_args_in_conslist =
+        typename
+        std::enable_if_t
+        <
+            sizeof...(Conslist) == 1,
+            typename aml::conslist<Conslist...>::head::template apply<F>
+        >;
+    };
 }

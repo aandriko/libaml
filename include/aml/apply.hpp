@@ -10,7 +10,15 @@ namespace aml
     struct eval;
 
     
-    template<int n, template<typename...> class F, typename... X>
+    template<typename... X>
+    struct delay
+    {
+        using eval = aml::eval<X...>;
+    };
+    
+
+    
+    template<template<typename...> class F, typename... X>
     struct apply;
 
     
@@ -20,6 +28,13 @@ namespace aml
         using type = Atomic_Term;
     };
 
+
+    template<typename Any_Term>
+    struct eval<delay<Any_Term> >
+    {
+        using type = Any_Term;
+    };
+    
 
     template<template<typename...> class F, typename... X>
     struct eval<F<X...> >
@@ -35,31 +50,25 @@ namespace aml
     };
     
 
-    template<int n, template<typename...> class F, typename... X>
-    struct eval<apply<n, F, X...> >
-    {
-        using type = apply<n-1, F, X...>;
-    };
-
     template<template<typename...> class F, typename... X>
-    struct eval<apply<0, F, X...> >
+    struct eval<apply<F, X...> >
     {
-        using type = F< typename eval<X>::type... >;
+        using type = F< typename eval<X>::type...>;
     };
     
     
-    template<template<typename...> class F, int n = 0>
+    template<template<typename...> class F>
     struct bra
     {
         template<typename... X>
-        using ket = apply<n, F, X...>;
+        using ket = apply<F, X...>;
     };
 
 
     template<typename... X>
     struct ket
     {
-        template<template<typename...> class F, int n = 0>
-        using bra = apply<n, F, X...>;
+        template<template<typename...> class F>
+        using bra = apply<F, X...>;
     };
 }       

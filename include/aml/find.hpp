@@ -44,7 +44,7 @@ namespace aml
             
             using type =
                 
-                eval<
+        typename        eval<
                 typename
             std::conditional_t
             <

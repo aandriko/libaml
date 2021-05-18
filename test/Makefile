@@ -1,4 +1,4 @@
-CPP = g++-10
+CPP = clang++-10
 all_programs := $(patsubst %.cpp, bin/%, $(wildcard *.cpp))
 
 

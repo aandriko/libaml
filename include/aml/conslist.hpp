@@ -1,6 +1,5 @@
 #pragma once
 
-#include <type_traits>
 
 namespace aml
 {           
@@ -75,7 +74,7 @@ namespace aml
 
     
     template<typename... one_conslist_arg>
-    using head = typename conslist<one_conslist_arg...>::head::head;
+    using head = typename conslist<one_conslist_arg...>::head::head ;
     
     
     template<typename... one_conslist_arg>
@@ -86,13 +85,16 @@ namespace aml
     template<template<typename...> class F>
     struct fix_function
     {
+    private:
         template<typename... Conslist>
-        using apply_to_args_in_conslist =
-        typename
-        std::enable_if_t
-        <
-            sizeof...(Conslist) == 1,
-            typename aml::conslist<Conslist...>::head::template apply<F>
-        >;
+        struct apply_to_args_in_conslist_
+        {
+            static_assert(sizeof...(Conslist) == 1, "The function arguments must be gathered in one conslist.");
+            using type = typename aml::conslist<Conslist...>::head::template apply<F>;
+        };
+
+    public:            
+        template<typename... Conslist>
+        using apply_to_args_in_conslist = typename apply_to_args_in_conslist_<Conslist...>::type;
     };
 }

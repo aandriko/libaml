@@ -9,24 +9,6 @@
 
 namespace aml
 {
-    template<typename... X>
-    using conditional =
-        std::enable_if_t
-        <
-            sizeof...(X) == 3,                          
-            std::conditional_t< conslist<X...>::head::eval(),
-                                typename conslist<X...>::tail::head,
-                                typename conslist<X...>::tail::tail::head >
-        >;
-
-    template<typename T>
-    using add_type = typename T::type;
-    
-    template<bool b>
-    struct bool_
-    {
-        static constexpr bool eval() { return b; }
-    };
     
     
     template<template<typename...> class Pred>

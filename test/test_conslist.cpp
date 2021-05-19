@@ -3,6 +3,8 @@
 
 #include <type_traits>
 
+#include <boost/core/demangle.hpp>
+#include <iostream>
 
 namespace test::conslist
 {
@@ -56,6 +58,19 @@ namespace test::conslist
         static_assert(std::is_same<list_t::apply<Template>, Template<type<1>, type<2>, type<3> > >::value, "");
         
     }
+
+    void test_conditional()
+    {
+        using t0 = aml::conditional< aml::true_, int, void*>;
+
+        
+        std::cout << boost::core::demangle(typeid(t0*).name()) << std::endl;
+        //       static_assert(std::is_same<int, t0>::value, "");
+
+        //        using t1 = aml::conditional< aml::false, int, void*>;
+        //        static_assert(std::is_same<void*, t0>::value, "");        
+                      
+    }
     
 }
 
@@ -66,7 +81,10 @@ namespace test::conslist
 
 int main()
 {
-    void (*test_set[])() = { test::conslist::test_empty_list, test::conslist::test_non_empty_list };
+    void (*test_set[])() = { test::conslist::test_empty_list,
+                             test::conslist::test_non_empty_list,
+                             test::conslist::test_conditional                             
+    };
 
     for ( auto test : test_set )
         test();

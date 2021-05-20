@@ -85,7 +85,11 @@ namespace aml
 
     template<typename T>
     using add_type = typename T::type;
-        
+    
+
+    template<typename... X>
+    using identity = typename enable< typename conslist<X...>::head >::template if_<bool_<sizeof...(X) == 1> >;
+
 }
 
 namespace aml::type

@@ -61,9 +61,8 @@ namespace test::exponent
     {
         using namespace aml;
         
-        static_assert( std::is_same<      lazy::identity<t0>::type,      identity<t0> >::value, "");
 
-        static_assert( std::is_same<      lazy::identity<t0>::type,                t0 >::value, "");
+        static_assert( std::is_same<          identity<t0>,                t0 >::value, "");
 
 
 

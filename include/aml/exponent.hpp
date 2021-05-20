@@ -21,13 +21,6 @@ namespace aml
 
 namespace aml::lazy
 {
-    template<typename... X>
-    struct identity
-    {
-        static_assert(sizeof...(X) == 1, "The identity functor can only take exactly one parameter.");        
-        using type = typename conslist<X... >::head;
-    };
-
 
     template<typename...>
     struct power;
@@ -77,10 +70,7 @@ namespace aml::lazy
 
 
 namespace aml
-{    
-    template<typename... X>
-    using identity = typename aml::lazy::identity<X...>::type;
-
+{
 
     template<typename... Exponent_and_Type>
     using power = typename aml::lazy::power<Exponent_and_Type...>::type;    

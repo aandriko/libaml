@@ -1,7 +1,5 @@
 #pragma once
 
-#include <type_traits>
-
 #include "./nucleus.hpp"
 
 
@@ -11,70 +9,74 @@ namespace aml
 
     
     template<auto n>
-    struct exp
-    {
-        //        static_assert(std::is_integral<decltype(n)>::value ||
-        //                      std::is_same< decltype(infinity), decltype(n) >::value, "");
-    };    
-}
+    struct exp;
 
-
-namespace aml::lazy
-{
-
-    template<typename...>
-    struct power;
-
-    // power<exp<0>, T> == T
-    //
-    // power<exp<n>, T> == T::type .... ::type    (n-times type)
-    //
-    // power<exp<infinty>, T> == power<exp<n>, T>,
-    // with n chosen to satisfy one of the following condtions A, B:
-    //   A: power<exp<n>, T>::type == power<exp<n>, T>
-    //   or
-    //   B: power<exp<n>, T>::type does not exist.
     
-    
-    template<typename T>
-    struct power<exp<0>, T>
+    template<>
+    struct exp<0>
     {
-        using type = T;
-    };
-
-        
-    template<int n, typename T>
-    struct power<aml::exp<n>, T>
-    {
-        using type = typename power<exp<n-1>, typename T::type>::type;
+        template<typename T>
+        using power = T;
     };
 
     
-    template<typename T>
-    struct power< aml::exp<aml::infinity>, T>
+    template<int n>
+    struct exp<n>
     {
     private:
+        template<typename... T>
+        using T_ = typename enable<typename conslist<T...>::head>::template if_<bool_<sizeof...(T) == 1> >;
+        
+    public:
+        template<typename... T>
+        using power = typename exp<n-1>::template power< typename T_<T...>::type >;
+    };
+
+
+    template<>
+    struct exp<infinity>
+    {
+    private:
+        template<auto>
+        friend struct exp;
+        
         template<typename X, typename R = typename X::type>
         static constexpr R add_type_if_possible_(void*, void*);
 
         template<typename X>
         static constexpr X add_type_if_possible_(void*, ...);
-        
+
+        template<typename... T>
+        using T_ = typename enable< typename conslist<T...>::head >::template if_<bool_<sizeof...(T) == 1>>;
+
+        template<typename T>
         using next_T   = decltype(add_type_if_possible_<T>(nullptr, nullptr));
-        using next_exp = aml::conditional < is_same<T, next_T>, exp<0>, exp<infinity> >;
 
+        template<typename T>
+        using next_exp = conditional < is_same<T, next_T<T>>, exp<0>, exp<infinity> >;
+
+        template<typename... T>
+        struct power_
+        {
+            using type = typename next_exp< T_<T...> >::template power< next_T<T_<T...> > >;
+        };
+        
     public:
-        using type = typename power<next_exp, next_T>::type;
+        template<typename... T>
+        using power =  typename power_<T...>::type;
     };
-}
 
-
-namespace aml
-{
-
+    
     template<typename... Exponent_and_Type>
-    using power = typename aml::lazy::power<Exponent_and_Type...>::type;    
+    using power = typename
+        enable
+        <
+            typename conslist<Exponent_and_Type...>::head::
 
+            template power<typename conslist<Exponent_and_Type...>::tail::head > 
+
+        >::template
+        if_< bool_<sizeof...(Exponent_and_Type) == 2> >;
 }
 
 

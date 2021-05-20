@@ -62,18 +62,7 @@ namespace test::exponent
         using namespace aml;
         
 
-        static_assert( std::is_same<          identity<t0>,                t0 >::value, "");
-
-
-
-        static_assert( std::is_same< lazy::power<exp<0>, t0>::type, power<exp<0>, t0> >::value, "");
-        
-        static_assert( std::is_same< lazy::power<exp<1>, t0>::type, power<exp<1>, t0>  >::value, "");
-
-        static_assert( std::is_same< lazy::power<exp<2>, t0>::type, power<exp<2>, t0>  >::value, "");
-
-        static_assert( std::is_same< lazy::power<exp<infinity>, t0>::type, power<exp<infinity>, t0> >::value, "");
-        
+        static_assert( std::is_same<          identity<t0>,                t0 >::value, "");        
 
         
         static_assert( std::is_same< power<exp<0>, t0>,  t0 >::value, "");
@@ -94,7 +83,7 @@ namespace test::exponent
     {
         using namespace aml;
 
-        
+
         static_assert(std::is_same< function::power<exp<0>, F>::template apply_to<int>, int>::value,"");
 
 
@@ -122,7 +111,6 @@ namespace test::exponent
 
                           F<F<F<char, int*, double>>>
                       >::value,"");
-
 
     }
     

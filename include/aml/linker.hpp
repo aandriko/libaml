@@ -3,8 +3,7 @@
 #include <type_traits>
 #include <utility>
 
-#include "./parameters.hpp" 
-#include "./conslist.hpp"
+#include "./nucleus.hpp" 
 #include "./find.hpp"
 
 namespace aml

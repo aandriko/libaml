@@ -1,8 +1,7 @@
 #pragma once
 
-#include "./parameters.hpp"
 #include "./exponent.hpp"
-#include "./conslist.hpp"
+#include "./nucleus.hpp"
 
 namespace aml
 {

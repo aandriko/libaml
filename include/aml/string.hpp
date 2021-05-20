@@ -1,6 +1,6 @@
 #pragma once
 
-#include "./parameters.hpp"
+#include "./nucleus.hpp"
 
 namespace aml
 {

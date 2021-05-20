@@ -67,6 +67,22 @@ namespace aml
         >;
 
 
+    template<typename... instantiation_error>
+    struct is_same
+    {
+        static_assert(sizeof...(instantiation_error) == 2,
+                      "Error: is_same has not been instantiated with two arguments.");
+    };
+
+    
+    template<typename X, typename Y>
+    struct is_same<X, Y> : public false_ {};
+
+
+    template<typename X>
+    struct is_same<X, X> : public true_ {};
+        
+
     template<typename T>
     using add_type = typename T::type;
         

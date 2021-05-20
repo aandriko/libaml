@@ -2,7 +2,7 @@
 
 #include <type_traits>
 
-#include "./conslist.hpp"
+#include "./nucleus.hpp"
 
 
 namespace aml
@@ -13,8 +13,8 @@ namespace aml
     template<auto n>
     struct exp
     {
-        static_assert(std::is_integral<decltype(n)>::value ||
-                      std::is_same< decltype(infinity), decltype(n) >::value, "");
+        //        static_assert(std::is_integral<decltype(n)>::value ||
+        //                      std::is_same< decltype(infinity), decltype(n) >::value, "");
     };    
 }
 
@@ -68,7 +68,7 @@ namespace aml::lazy
         static constexpr X add_type_if_possible_(void*, ...);
         
         using next_T   = decltype(add_type_if_possible_<T>(nullptr, nullptr));
-        using next_exp = std::conditional_t < std::is_same<T, next_T>::value, exp<0>, exp<infinity> >;
+        using next_exp = aml::conditional < is_same<T, next_T>, exp<0>, exp<infinity> >;
 
     public:
         using type = typename power<next_exp, next_T>::type;

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <type_traits>
-
 #include "./apply.hpp"
 #include "./exponent.hpp"
 #include "./nucleus.hpp"
@@ -27,9 +25,9 @@ namespace aml
                 
         typename        eval<
                 typename
-            std::conditional_t
+                aml::conditional
             <
-                sizeof...(X) == 0,
+                    bool_<sizeof...(X) == 0>,
         
                     aml::delay< aml::delay< conslist<>  > >,
 

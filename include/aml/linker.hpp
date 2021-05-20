@@ -1,8 +1,5 @@
 #pragma once
 
-#include <type_traits>
-#include <utility>
-
 #include "./nucleus.hpp" 
 #include "./find.hpp"
 
@@ -26,7 +23,7 @@ namespace aml
         
         
         template<typename Symbol_>
-        static constexpr bool is_indexed_by_symbol() { return std::is_same<Symbol, Symbol_>::value; }
+        static constexpr bool is_indexed_by_symbol() { return is_same<Symbol, Symbol_>::eval(); }
 
         
     public:
@@ -123,7 +120,8 @@ namespace aml
                 Subtype< this_linker, Parameters... >(static_cast<Other&&>(other))...
             { }
 
-            template<typename... Args, typename = std::enable_if_t< (sizeof...(Args) > 1) > >
+            //            template<typename... Args, typename = typename enable<void>::template if_< (sizeof...(Args) > 1) > >
+            template<typename... Args, typename = typename bool_< (sizeof...(Args) > 1) >::sfinae >
             constexpr algebraic_type(Args&&... args)
             :
                 Subtype< this_linker, Parameters... >(static_cast<Args&&>(args))...

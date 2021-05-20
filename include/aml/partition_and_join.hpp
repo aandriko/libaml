@@ -1,7 +1,5 @@
 #pragma once
 
-#include <type_traits>
-
 #include "./conslist.hpp"
 
 namespace aml::lazy
@@ -76,9 +74,9 @@ namespace aml
         {
             template<typename X, typename Collector>
             using scan_argument = typename
-                std::conditional_t<Pred<X>::eval(),
-                                   typename Collector::accept_,
-                                   typename Collector::reject_>::template add<X>;
+                conditional<Pred<X>,
+                            typename Collector::accept_,
+                            typename Collector::reject_>::template add<X>;
         };
     };       
 

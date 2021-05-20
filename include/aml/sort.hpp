@@ -1,7 +1,5 @@
 #pragma once
 
-#include <type_traits>
-
 #include "./partition_and_join.hpp"
 #include "./nucleus.hpp"
 
@@ -48,9 +46,9 @@ namespace aml
             template<typename... Args>
             struct lazy_sort
             {
-                using type = typename std::conditional_t
+                using type = typename conditional
                                       <
-                                          sizeof...(Args) == 0,
+                                          bool_<sizeof...(Args) == 0>,
 
                                           type::hull<conslist<>>,
                                                          

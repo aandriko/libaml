@@ -2,7 +2,7 @@
 
 #include "aml/find.hpp"
 #include "aml/sort.hpp"
-#include "aml/partition_and_join.hpp"
+#include "aml/partition.hpp"
 #include <boost/core/demangle.hpp>
 #include <iostream>
 

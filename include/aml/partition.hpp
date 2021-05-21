@@ -1,7 +1,9 @@
 #pragma once
 
 #include "./conslist.hpp"
+#include "./term.hpp"
 
+/*
 namespace aml::lazy
 {
     template<typename...>
@@ -19,12 +21,14 @@ namespace aml::lazy
         using type = typename join<F<X..., Y...>, Z... >::type;
     };
 }
+*/
+
 
 
 namespace aml
 {
-    template<typename... X>
-    using join = typename lazy::join<X...>::type;
+    //    template<typename... X>
+    //    using join = typename lazy::join<X...>::type;
 
 
     template<typename...>

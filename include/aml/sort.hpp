@@ -1,6 +1,6 @@
 #pragma once
 
-#include "./partition_and_join.hpp"
+#include "./partition.hpp"
 #include "./nucleus.hpp"
 
 namespace aml

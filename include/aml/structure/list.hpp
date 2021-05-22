@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../string.hpp"
-#include "../nucleus.hpp"
+#include "../basic_types.hpp"
 
 
 namespace aml::structure

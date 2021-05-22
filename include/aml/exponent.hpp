@@ -1,6 +1,7 @@
 #pragma once
 
-#include "./nucleus.hpp"
+#include "./basic_types.hpp"
+#include "./apply.hpp"
 
 
 namespace aml
@@ -17,6 +18,8 @@ namespace aml
     {
         template<typename T>
         using power = T;
+
+        static constexpr auto eval() { return 0; }
     };
 
     
@@ -30,6 +33,8 @@ namespace aml
     public:
         template<typename... T>
         using power = typename exp<n-1>::template power< typename T_<T...>::type >;
+
+        static constexpr auto eval() { return n; }
     };
 
 
@@ -64,6 +69,8 @@ namespace aml
     public:
         template<typename... T>
         using power =  typename power_<T...>::type;
+
+        static constexpr auto eval() { return infinity; }
     };
 
     
@@ -80,33 +87,43 @@ namespace aml
 }
 
 
-namespace aml::function
+namespace aml
 {
-    template<typename N, template<typename...> class F>
-    struct power;
+    template<template<typename...> class...>
+    struct function;
 
-    
-    template<template<typename...> class F>
-    struct power<aml::exp<0>, F>
+    template<>
+    struct function<>
     {
-        template<typename... X>
-        using apply_to = aml::identity<X...>;
-    };
-    
-
-    template<int n, template<typename...> class F>
-    struct power<aml::exp<n>, F>
-    {
-    private:
-        template<typename... Z>
-        struct state
+        template<typename Exp, template<typename...> class F>
+        struct power
         {
-            using type = state<F<Z...> >;
-            using result = typename conslist<Z...>::head;
+        private:
+            template<typename... Z>
+            struct state
+            {
+                using type   = state<F<Z...> >;
+                using result = typename conslist<Z...>::head;
+            };
+
+        public:
+            template<typename... X>
+            using apply_to = typename
+                             conditional
+                             <
+                                 bool_<Exp::eval() == 0>,
+
+                                 apply< state, apply<identity, X...> >,
+                                              
+                                 apply
+                                 <
+                                     aml::power,
+                                     aml::exp< Exp::eval()- 1>,
+                                     apply< state, apply<F, X...> >
+                                 >
+
+                              >::eval::result;
+                
         };
-            
-    public:
-        template<typename... X>
-        using apply_to = typename aml::power<aml::exp<n-1>, typename state<X...>::type >::result;
-    };
+    };    
 }

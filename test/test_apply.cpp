@@ -48,6 +48,7 @@ namespace test::application
         
     }
 
+    /*
     void test_bra_and_ket()
     {
         using t0 = aml::bra<F>::ket<int, char>;
@@ -58,6 +59,7 @@ namespace test::application
         static_assert(std::is_same<aml::eval<t0>::type, F<int, char> >::value, "");
 
     }
+    */
 }
 
 #include <iostream>
@@ -67,8 +69,8 @@ namespace test::application
 int main()
 {
     void (*test_set[])() = { test::application::test_single_application,
-                             test::application::test_multiple_applications,
-                             test::application::test_bra_and_ket };
+                             test::application::test_multiple_applications };
+
 
     for ( auto test : test_set )
         test();

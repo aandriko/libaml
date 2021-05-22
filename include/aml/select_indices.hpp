@@ -1,7 +1,7 @@
 #pragma once
 
 #include "./exponent.hpp"
-#include "./nucleus.hpp"
+#include "./basic_types.hpp"
 
 namespace aml
 {
@@ -9,7 +9,7 @@ namespace aml
     struct select_indices
     {
         template<typename... X>
-        using from = conslist< typename function::power<exp<idx>, tail>::template apply_to<conslist<X...>>::head... >;
+        using from = conslist< typename function<>::power<exp<idx>, tail>::template apply_to<conslist<X...>>::head... >;
     };
 
 

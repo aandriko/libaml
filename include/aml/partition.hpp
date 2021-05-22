@@ -1,36 +1,10 @@
 #pragma once
 
-#include "./conslist.hpp"
-#include "./term.hpp"
-
-/*
-namespace aml::lazy
-{
-    template<typename...>
-    struct join;
-    
-    template<template<typename... > class F, typename... X>
-    struct join<F<X...> >
-    {
-        using type = F<X...>;
-    };
-    
-    template<template<typename...> class F, typename... X, typename... Y, typename... Z>
-    struct join<F<X...>, F<Y...>, Z... >
-    {
-        using type = typename join<F<X..., Y...>, Z... >::type;
-    };
-}
-*/
-
+#include "./basic_types.hpp"
 
 
 namespace aml
 {
-    //    template<typename... X>
-    //    using join = typename lazy::join<X...>::type;
-
-
     template<typename...>
     struct partition;
 
@@ -91,12 +65,13 @@ namespace aml
         template<template<typename...> class Pred>
         using with =
             typename
-            conslist<H, T...>::template rfold_with<
-                                                      aml::partition<>::template fix_predicate<Pred>::
-                                                      template scan_argument,
+            conslist<H, T...>::template rfold_with
+                                        <
+                                            aml::partition<>::template fix_predicate<Pred>::
+                                                              template scan_argument,
 
-                                                      aml::partition<>::collector< conslist<>, conslist<> >
-
-                                                  >::result;
+                                            aml::partition<>::collector< conslist<>, conslist<> >
+            
+                                         >::result;
     };      
 }

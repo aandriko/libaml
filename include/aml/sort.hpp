@@ -1,7 +1,7 @@
 #pragma once
 
 #include "./partition.hpp"
-#include "./nucleus.hpp"
+#include "./basic_types.hpp"
 
 namespace aml
 {
@@ -50,7 +50,7 @@ namespace aml
                                       <
                                           bool_<sizeof...(Args) == 0>,
 
-                                          type::hull<conslist<>>,
+                                          hull<conslist<>>,
                                                          
                                           sort_non_empty_list<Args...>
 

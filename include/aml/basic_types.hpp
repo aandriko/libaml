@@ -4,7 +4,6 @@
 
 namespace aml
 {
-
     template<typename... T>
     struct enable
     {
@@ -19,10 +18,22 @@ namespace aml
         };
        
     public:
-        template<typename Bool>
-        using if_ = typename if_aux_<Bool::eval()>::type;        
+        template<typename... Bool>
+        using if_ = typename if_aux_< (Bool::eval() && ...) >::type;        
     };
 
+    
+    template<typename... Bool>
+    struct if_
+    {
+        template<typename... T>
+        using enable = typename aml::enable<T...>::template if_<Bool...>;
+        
+    private:
+        static_assert( (Bool::eval() || ... || true), "Arguments for eval must be of a boolean type.");
+        
+    };
+    
     
     template<bool>
     struct bool_;
@@ -59,8 +70,10 @@ namespace aml
 
         
     template<typename... CTF>
-    using conditional =
-        typename conslist<CTF...>::tail::
+    using conditional = typename 
+
+        conslist<CTF...>::tail::
+
         template apply
         <
             bool_< conslist<CTF...>::head::eval()>::template conditional
@@ -90,98 +103,93 @@ namespace aml
     template<typename... X>
     using identity = typename enable< typename conslist<X...>::head >::template if_<bool_<sizeof...(X) == 1> >;
 
-}
 
-namespace aml::type
-{
+    template<typename...>
+    struct term;
+
+    
+    template<template<typename...> class F, typename... X>
+    struct term<F<X...>>
+    {
+        template<typename... Y>
+        using function = F<Y...>;
+
+        using subterms = conslist<X...>;
+    };
+
+
+    template<typename Atomic_Term>
+    struct term<Atomic_Term>
+    {
+        template<typename... X>
+        using function = aml::identity<X...>;
+
+        using subterms = conslist<>;
+    };    
+
+    
+    template<typename... T>
+    struct hull;
+
+    
     template<typename T>
-    struct hull 
+    struct hull<T>
     {
         using type = T;
     };
-}
 
 
-namespace aml::function
-{
+    template<template<typename...> class... >
+    struct function;
+    
+            
     template<template<typename...> class F>
-    struct hull
+    struct function<F>
     {
         template<typename... X>
         using apply_to = F<X...>;
     };
 
 
-    template<template<typename...> class...>
-    struct parameters;
-}
+    template<typename...>
+    struct ket;
 
+    
+    template<typename... X>
+    struct ket<conslist<X...> >
+    {
+        template<template<typename...> class F>
+        using bra = F<X...>;
+    };
 
-namespace aml::object
-{
+    
+    template<template<typename...> class F>
+    struct bra
+    {
+        template<typename... Conslist>
+        using ket = typename aml::ket<Conslist...>::template bra<F>;
+    };
+
+    
+    template<auto... o>
+    struct object;
+
+    
     template<auto o>
-    struct hull 
+    struct object<o>
     {
         static constexpr auto eval() { return o; }
     };
-}
 
-
-namespace aml::type
-{
-    template<typename... Type>
-    struct parameters
+    
+    template<>
+    struct object<>
     {
-        template<template<typename...> class F>
-        using apply = F<Type...>;
-    };        
-}
-
-
-namespace aml::function
-{
-    template<template<typename...> class... Function>
-    struct parameters
-    {
-        using as_types = type::parameters< hull<Function>... >;
+        template<auto... obj>
+        struct list
+        {
+            template<template<auto...> class F>
+            using apply = F<obj...>;
+        };
     };
 }
-
-
-namespace aml::object
-{
-    template<auto... Object>
-    struct parameters
-    {
-        using as_types = type::parameters< object::hull<Object>... >;
-
-        
-        template<template<auto...> class F>
-        using apply = F<Object...>;
-    };
-}
-
-
-namespace aml::type
-{
-    template<auto... Object>
-    struct parameters< aml::object::hull<Object>... >
-    {
-        using as_objects = object::parameters<Object...>;
-
-        
-        template<template<typename...> class F>
-        using apply = F< aml::object::hull<Object>... >;
-    };
-
-
-    template<template<typename...> class... Function>
-    struct parameters< aml::function::hull<Function>... >
-    {
-        using as_functions = function::parameters<Function...>;
-
-        template<template<typename...> class F>
-        using apply = F< aml::function::hull<Function>... >;
-    };
-}
-

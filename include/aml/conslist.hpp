@@ -51,9 +51,19 @@ namespace aml
             using type = typename conslist<Lists...>::template rfold_with<combine, conslist<> >;
         };
 
+        template<bool b>
+        struct check_
+        {
+            static_assert(b, "");
+            using type = conslist<>;
+        };
+        
     public:
         template<typename... Lists>
         using join = typename join_<Lists...>::type;
+
+        template<bool b>
+        using check = typename check_<b>::type;
     };
 
 
@@ -91,9 +101,22 @@ namespace aml
         
         static auto constexpr size() { return 1 + sizeof...(T); }
 
-        
-        template<typename... Y>
-        conslist<H, T..., Y...> operator+(conslist<Y...>); // no definition desired!
+                
+        //        template<typename... Y>
+        //        conslist<H, T..., Y...> operator+(conslist<Y...>); // no definition desired!
+
+    private:
+        template<bool b>
+        struct check_
+        {
+            static_assert(b, "");
+            using type = conslist<H, T...>;
+        };
+
+    public: 
+        template<bool b>
+        using check = typename check_<b>::type;
+            
     };
 
     
@@ -106,36 +129,46 @@ namespace aml
     // effect: tail<conslist<h, t...> > == conlist<t...> == conslist<h, t...>::tail
     
     
+    template<typename... list_and_params>
+    using cons = typename conslist<list_and_params...>::tail::template apply< conslist<list_and_params...>::head::template cons>;
+
     
-    template<template<typename...> class F>
-    struct fix_function
-    {
-    private:
-        template<typename... Conslist>
-        struct apply_to_args_in_conslist_
-        {
-            static_assert(sizeof...(Conslist) == 1, "The function arguments must be gathered in one conslist.");
-            using type = typename aml::conslist<Conslist...>::head::template apply<F>;
-        };
-
-    public:            
-        template<typename... Conslist>
-        using apply_to_args_in_conslist = typename apply_to_args_in_conslist_<Conslist...>::type;
-    };
-
-
     template<typename... list_and_params>
-    using cons = typename
-        fix_function< conslist<list_and_params...>::head::template cons >
-        ::template apply_to_args_in_conslist< typename conslist<list_and_params...>::tail >;
-
-
-    template<typename... list_and_params>
-    using rcons = typename
-        fix_function< conslist<list_and_params...>::head::template rcons >
-        ::template apply_to_args_in_conslist< typename conslist<list_and_params...>::tail >;
-
+    using rcons = typename conslist<list_and_params...>::tail::template apply< conslist<list_and_params...>::head::template rcons>;
+   
+    template<typename... list>
+    using reverse = typename conslist<list...>::template check<conslist<list...>::size() == 1>::head::reverse;
+    
 
     template<typename... Conslists>
     using join = typename conslist<>::template join<Conslists...>;
+
+
+    template<typename... List_Function_Terminal>
+    using lfold =
+        typename conslist<List_Function_Terminal...>::
+        template check< conslist<List_Function_Terminal...>::size() == 3>::head::
+        template lfold_with
+                 <
+                     conslist<List_Function_Terminal...>::tail::head::template apply_to,
+                     typename conslist<List_Function_Terminal...>::tail::tail::head
+                 >;
+
+    
+    template<typename... List_Function_Terminal>
+    using rfold =
+        typename conslist<List_Function_Terminal...>::
+        template check< conslist<List_Function_Terminal...>::size() == 3>::head::
+        template rfold_with
+                 <
+                     conslist<List_Function_Terminal...>::tail::head::template apply_to,
+                     typename conslist<List_Function_Terminal...>::tail::tail::head
+                 >;
+
+    
+    template<typename... X>
+    struct size
+    {
+        static constexpr auto eval() { return sizeof...(X); };
+    };
 }

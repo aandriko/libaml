@@ -118,7 +118,7 @@ namespace aml
                                  apply
                                  <
                                      aml::power,
-                                     aml::exp< Exp::eval()- 1>,
+                                     aml::exp< Exp::eval() - 1 >,
                                      apply< state, apply<F, X...> >
                                  >
 

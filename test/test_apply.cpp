@@ -14,23 +14,24 @@ namespace test::application
     {
         using aml::eval;
         
-        using t0 = aml::apply<F>;
+        //        using t0 = aml::eval< aml::apply<0, F> >;
 
-
+        /*
         static_assert(std::is_same< eval<      int>::type,           int >::value, "");
         static_assert(std::is_same< eval<       t0>::type,           F<> >::value, "");
 
-        using s0 = aml::apply<F, int, char>;
+        using s0 = aml::apply<0, F, int, char>;
         using F_t = F<int, char>;
 
         static_assert(std::is_same< eval<      int>::type,              int >::value, "");
         static_assert(std::is_same< eval<       s0>::type,              F_t >::value, "");
+        */
     }
 
     
     void test_multiple_applications()
     {
-
+        /*
         using t0 = aml::apply<F, int, aml::delay< aml::delay< aml::apply<F, char> > > >;
         using t1 = aml::eval<t0>;
         using t3 = aml::eval<aml::eval<t1> >;
@@ -45,7 +46,7 @@ namespace test::application
         static_assert(std::is_same< t5::type, aml::eval< aml::delay < aml::apply<F, int> > >>::value, "");
         static_assert(std::is_same< t5::type::type, aml::apply<F, int> >::value, "");
         static_assert(std::is_same< aml::eval<t5::type::type>::type, F<int> >::value, "");
-        
+        */
     }
 
     /*

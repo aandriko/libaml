@@ -1,56 +1,61 @@
 #pragma once
 
+#include "./exponent.hpp"
 
 namespace aml
 {
-    template<typename... >
-    struct eval;
-
-    template<typename... X>
-    struct delay
-    {
-        using eval = aml::eval<X...>;
-    };
-
-       
-    template<template<typename...> class F, typename... X>
-    struct apply
-    {
-        using eval = typename eval<apply<F, X...> >::type;
-    };
+    template<int n, template<typename...> class F, typename... X>
+    struct apply;
 
     
-    template<typename Atomic_Term>
-    struct eval<Atomic_Term>
-    {
-        using type = Atomic_Term;
-    };
+    template<typename... Term>
+    struct evaluation;
 
+    template<typename...>
+    struct evaluation_;
 
-    template<typename Any_Term>
-    struct eval<delay<Any_Term> >
-    {
-        using type = Any_Term;
-    };
-    
-
-    template<template<typename...> class F, typename... X>
-    struct eval<F<X...> >
-    {
-        using type = F<typename eval<X>::type... >;
-    };
-
-    
     template<typename T>
-    struct eval<eval<T> >
+    struct evaluation_<T> { using type = evaluation<T>; };
+
+
+    template<typename T>
+    struct evaluation_<evaluation<T> > { using type = evaluation<T>; };
+
+    
+    template<typename Term>
+    struct evaluation<Term>
     {
-        using type = eval<typename eval<T>::type >;
+        using term = Term;
+        using type = typename evaluation_<term>::type;
+
     };
     
+    
+    template<template<typename...> class F, typename... X>
+    struct evaluation<apply<0, F, X...>
+    {
+        using term = F< typename evaluation<X>::term... >;
+        using type = typename evaluation_<term>::type;
+    };
+
+
+    template<int n, template<typename...> class F, typename... X>
+    struct evaluation<apply<n, F, X...> >
+    {
+        using term = apply<n-1, F, typename evaluation<X>::term... >;
+        using type = typename evaluation_<term>::type;
+    };
+
 
     template<template<typename...> class F, typename... X>
-    struct eval<apply<F, X...> >
+    struct evaluation<F<X...> >
     {
-        using type = F< typename eval<X>::type...>;
-    };    
+        using term = F< typename evaluation<X>::term... >;
+        using type = typename evaluation_<term>::type;
+    };
+
+    
+    template<typename... Term>
+    using eval = typename power<exp<infinity>, evaluation<Term...> >::term;
+    
 }       

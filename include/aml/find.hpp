@@ -21,45 +21,44 @@ namespace aml
             template<typename... Y>
             using this_template = in_<Y...>;
             
-            using type =
-                
-                typename
+            using type = typename
+
                 eval
                 <
-                    typename
                     aml::conditional
                     <
                         bool_<sizeof...(X) == 0>,
-        
-                        aml::delay< aml::delay< conslist<>  > >,
+                
+                        hull<conslist<>>,
 
-                        aml::delay
+                        apply
                         <
-                            aml::apply
+                            1,
+
+                            aml::conditional,
+                        
+                            apply<1, Pred,  apply<1, aml::head, conslist<X...> > > ,
+                        
+                            apply<1, conslist, apply<1, head, conslist<X...> >  >,
+                        
+                            apply
                             <
-                                aml::conditional,
-                        
-                                apply<Pred,  apply<aml::head, conslist<X...> > >,
-                        
-                                delay< apply< conslist, apply<head, conslist<X...> > >>,
-                        
-                                delay
-                                <
-                                    apply
-                                    <
-                                        add_type,
+                                1,
+
+                                add_type,
                                 
-                                        apply
-                                        <
-                                            bra<this_template>::template ket,
-                            
-                                            apply<tail, conslist<X...> >
-                                        >
-                                    >
+                                apply
+                                <
+                                    1,
+                                    
+                                    bra<this_template>::template ket,
+                                    
+                                    apply<1, tail, conslist<X...> >
                                 >
                             >
                         >
-                >::eval::eval::type>::type;
+                    >
+                >::type;                        
         };
 
         template<typename... X>

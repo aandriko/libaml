@@ -21,7 +21,7 @@ namespace aml
             template<typename... Y>
             using this_template = in_<Y...>;
             
-            using type = typename
+            using type =
 
                 eval
                 <
@@ -29,15 +29,15 @@ namespace aml
                     <
                         bool_<sizeof...(X) == 0>,
                 
-                        hull<conslist<>>,
+                        conslist<>,
 
                         apply
                         <
-                            1,
+                            0,
 
                             aml::conditional,
                         
-                            apply<1, Pred,  apply<1, aml::head, conslist<X...> > > ,
+                            apply<0, Pred,  apply<0, aml::head, conslist<X...> > > ,
                         
                             apply<1, conslist, apply<1, head, conslist<X...> >  >,
                         
@@ -58,7 +58,7 @@ namespace aml
                             >
                         >
                     >
-                >::type;                        
+                >;                        
         };
 
         template<typename... X>

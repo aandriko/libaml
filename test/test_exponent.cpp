@@ -18,8 +18,7 @@ namespace test::exponent
     struct s1 { using type = s2; };
     struct s0 { using type = s1; };
     
-    
-    
+        
     template<typename... Arrgs>
     struct F_
     {
@@ -86,17 +85,15 @@ namespace test::exponent
         
         static_assert(std::is_same< function<>::power<exp<0>, F>::template apply_to<int>, int>::value,"");
 
-
-            
+                            
         static_assert(std::is_same
                       <
                           function<>::power<exp<1>, F>::template apply_to<char, int*, double>,
 
                           F<char, int*, double>
                       >::value,"");
+        
 
-        
-        
         static_assert(std::is_same
                       <
                           function<>::power<exp<2>, F>::template apply_to<char, int*, double>,
@@ -111,7 +108,6 @@ namespace test::exponent
 
                           F<F<F<char, int*, double>>>
                       >::value,"");        
-
     }
     
 }

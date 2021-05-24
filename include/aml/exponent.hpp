@@ -1,7 +1,6 @@
 #pragma once
 
 #include "./basic_types.hpp"
-//#include "./apply.hpp"
 
 
 namespace aml
@@ -92,36 +91,6 @@ namespace aml
     template<template<typename...> class...>
     struct function;
 
-    // temporary fix:
-
-    template<typename...>
-    struct eval_;
-    
-    template<template<typename...> class F, typename... X>
-    struct apply_
-    {
-        using eval = F< typename eval_<X>::eval... >;
-    };
-
-    template<typename Term>
-    struct eval_<Term>
-    {
-        using eval = Term;
-    };
-
-    template<template<typename... > class F, typename... X>
-    struct eval_< F<X...> >
-    {
-        using eval = F< typename eval_<X>::eval... >;
-    };
-
-    template<template<typename...> class F, typename... X>
-    struct eval_< apply_<F, X... > >
-    {
-        using eval = F<typename eval_<X>::eval ... >;
-    };
-    
-
     
     template<>
     struct function<>
@@ -137,27 +106,20 @@ namespace aml
                 using result = typename conslist<Z...>::head;
             };
 
-            
-            
-            
+            template<typename... Z>
+            using apply_to_ = typename aml::power< exp<Exp::eval()-1>, state<Z...> >::type::result;
+
         public:
             template<typename... X>
-            using apply_to = typename
-                             conditional
-                             <
-                                 bool_<Exp::eval() == 0>,
+            using apply_to =
+                typename
+                bool_<Exp::eval() == 0>::template conditional
+                                                  <
+                                                      aml::function<identity>,
+            
+                                                      aml::function<apply_to_>
 
-                                 apply_< state, apply_<identity, X...> >,
-                                              
-                                 apply_
-                                 <
-                                     aml::power,
-                                     aml::exp< Exp::eval() - 1 >,
-                                     apply_< state, apply_<F, X...> >
-                                 >
-
-                              >::eval::result;
-                
+                                                  >::template apply_to<X...>;                
         };
     };    
 }

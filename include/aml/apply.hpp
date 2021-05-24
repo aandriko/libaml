@@ -1,6 +1,6 @@
 #pragma once
 
-#include "./exponent.hpp"
+#include "exponent.hpp"
 
 namespace aml
 {
@@ -29,12 +29,11 @@ namespace aml
         using type = typename evaluation_<term>::type;
 
     };
-    
-    
+
     template<template<typename...> class F, typename... X>
-    struct evaluation<apply<0, F, X...>
+    struct evaluation< apply<0, F, X...> >
     {
-        using term = F< typename evaluation<X>::term... >;
+        using term = F<typename evaluation<X>::term... >;
         using type = typename evaluation_<term>::type;
     };
 
@@ -54,8 +53,17 @@ namespace aml
         using type = typename evaluation_<term>::type;
     };
 
+
+    template<auto n>
+    struct exp;
+
+
+    template<typename...>
+    struct pwer;
+
     
     template<typename... Term>
     using eval = typename power<exp<infinity>, evaluation<Term...> >::term;
-    
+
+
 }       

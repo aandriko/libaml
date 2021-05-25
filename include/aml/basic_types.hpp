@@ -33,15 +33,29 @@ namespace aml
         static_assert( (Bool::eval() || ... || true), "Arguments for eval must be of a boolean type.");
         
     };
-    
-    
+
+
+        
     template<bool>
     struct bool_;
 
+    
     using true_  = bool_<true>;
     using false_ = bool_<false>;
+
     
+    template<typename... X>
+    using all = bool_< (X::eval() && ... ) >;
+
     
+    template<typename... X>
+    using one = bool_< (X::eval() || ... ) >;
+
+
+    template<typename... X>
+    using none = bool_< ! all<X...>::eval() >;
+
+            
     template<>
     struct bool_<true>
     {
@@ -151,8 +165,17 @@ namespace aml
     };
 
 
-    template<typename...>
-    struct ket;
+    template<typename... Conslist>
+    struct ket
+    {
+        static_assert(sizeof...(Conslist) == 1, "The parameter-list of ket must consist of a single conslist.");
+        static_assert(aml::is_same
+                      <
+                          typename term<typename conslist<Conslist...>::head>::function,
+                          aml::function<conslist>
+                      >::eval(),
+                      "The parameter of ket must be a conslist");
+    };
 
     
     template<typename... X>

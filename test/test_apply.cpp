@@ -1,5 +1,6 @@
 #include "aml/apply.hpp"
 #include "aml/string.hpp"
+#include "aml/basic_types.hpp"
 
 #include <type_traits>
 
@@ -28,12 +29,59 @@ namespace test::application
 
     }
 
+
+    template<typename...> class G {};
+
+    
+    template<typename... Args>
+    struct H
+    {
+        static_assert(sizeof...(Args) !=  1, "");
+        using type = typename aml::conslist<Args...>::head;
+    };
+
+
+    template<typename Arg>
+    struct H<Arg>
+    {
+        // no type called "type" here.
+    };
+
+
+    template<int n, typename... Args>
+    using type =
+        aml::eval
+        <
+        typename aml::apply<0,
+                            
+                            aml::conditional,
+                            
+                            aml::bool_<sizeof...(Args) == 1>,
+
+                            aml::apply<0, G, Args...>,
+                            
+                            aml::apply<n, aml::add_type, H<Args...> >
+
+                          
+                            
+                            >
+        >;
+    
     
     void test_multiple_applications()
     {
-        using t0 = aml::apply<0, F, int, aml::apply<2, F, char> > ;
+        using namespace aml;
+        
+        static_assert(is_same< type<1, int>, G<int>>::eval(), "");
+        static_assert(is_same< type<1, int, char>, int>::eval(), "");
 
-        static_assert(std::is_same<F<int, F<char> >, aml::eval<t0>>::value, "");
+        static_assert(is_same< type<0, int, char>, int>::eval(), "");
+        // The next line must reulst in a compile-time error, because
+        // the necessary delay of at least 1 is not added:
+        //
+        //static_assert(is_same< type<0, int>, G<int>>::eval(), "");
+
+
 
     }
 

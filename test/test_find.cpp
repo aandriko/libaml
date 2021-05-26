@@ -19,7 +19,7 @@ namespace test::find
     {
         static constexpr bool eval() { return std::is_integral<X>::value; };
     };
-    
+
     using f0 = l0::apply<aml::find<pred>::in>;
     using f1 = l1::apply<aml::find<pred>::in>;
     

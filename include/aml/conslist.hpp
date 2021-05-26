@@ -95,16 +95,12 @@ namespace aml
 
         
         template<template<typename...> class F, typename Z>
-        using lfold_with =
-            F<typename conslist<T...>::template lfold_with<F, Z>, H >;
+        using lfold_with =  F<Z, typename conslist<T...>::template lfold_with<F, H> >;
         
         
         static auto constexpr size() { return 1 + sizeof...(T); }
 
                 
-        //        template<typename... Y>
-        //        conslist<H, T..., Y...> operator+(conslist<Y...>); // no definition desired!
-
     private:
         template<bool b>
         struct check_

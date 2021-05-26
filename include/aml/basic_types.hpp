@@ -138,7 +138,7 @@ namespace aml
         template<typename... X>
         using function = aml::identity<X...>;
 
-        using subterms = conslist<>;
+        using subterms = conslist<Atomic_Term>;
     };    
 
     

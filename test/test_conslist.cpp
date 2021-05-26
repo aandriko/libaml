@@ -13,6 +13,7 @@ namespace test::conslist
 
     template<typename...>
     class Template {};
+
     
     void test_empty_list()
     {
@@ -33,15 +34,20 @@ namespace test::conslist
         static_assert(std::is_same<conslist<>::lfold_with<Template, void***>, void***>::value, "");
         static_assert(std::is_same<conslist<>::rfold_with<Template, void***>, void***>::value, "");
 
-        static_assert(conslist<>::size() == 0, "");
+        static_assert(std::is_same<aml::lfold<conslist<>, aml::function<Template>, void***>, void***>::value, "");
+        static_assert(std::is_same<aml::rfold<conslist<>, aml::function<Template>, void***>, void***>::value, "");
     }
 
+    
+    
     void test_non_empty_list()
     {
         using aml::conslist;
 
         
         using list_t = conslist< type<1>, type<2>, type<3> >;
+
+        static_assert(list_t::size() == 3, "");
 
         static_assert(std::is_same<list_t::cons<type<0> >,
                                    conslist< type<0>, type<1>, type<2>, type<3> > >::value, "");
@@ -56,20 +62,59 @@ namespace test::conslist
         static_assert(std::is_same<list_t::reverse, conslist<type<3>, type<2>, type<1> > >::value, "");
 
         static_assert(std::is_same<list_t::apply<Template>, Template<type<1>, type<2>, type<3> > >::value, "");
-        
+
+        static_assert(std::is_same
+                      <
+                          list_t::lfold_with<Template, void***>,
+                          Template<void***, Template< type<1>, Template<type<2>, type<3> > > >
+                      >::value, "");
+
+        static_assert(std::is_same
+                      <
+                          list_t::rfold_with<Template, void***>,
+                          Template< type<1>, Template< type<2>, Template< type<3>, void***> > >
+                      >::value, "");
+
+
+        static_assert(std::is_same
+                      <
+                          list_t::lfold_with<Template, void***>,
+                          aml::lfold< list_t, aml::function<Template>, void*** >
+                      >::value, "");
+
+        static_assert(std::is_same
+                      <
+                          list_t::rfold_with<Template, void***>,
+                          aml::rfold< list_t, aml::function<Template>, void*** >
+                      >::value, "");
+
     }
 
-    void test_conditional()
+    template<auto >
+    struct idx;
+    
+    void test_join()
     {
-        using t0 = aml::conditional< aml::true_, int, void*>;
+        using list_0 = aml::conslist<>;
+        using list_1 = aml::conslist<idx<1> >;
+        using list_2 = aml::conslist<idx<2>, idx<3> >;
+        using list_3 = aml::conslist<idx<4>, idx<5>, idx<6> >;
 
-        
-        std::cout << boost::core::demangle(typeid(t0*).name()) << std::endl;
-        //       static_assert(std::is_same<int, t0>::value, "");
+        using j_0 = aml::conslist<>::join<>;
+        using j_1 = aml::conslist<>::join<list_0>;
+        using j_2 = aml::conslist<>::join<list_0, list_0>;
+        using j_3 = aml::conslist<>::join<list_0, list_1>;
+        using j_4 = aml::conslist<>::join<list_1, list_2, list_3>;
+        using j_5 = aml::conslist<>::join<list_0, list_1, list_2, list_3>;
 
-        //        using t1 = aml::conditional< aml::false, int, void*>;
-        //        static_assert(std::is_same<void*, t0>::value, "");        
-                      
+        static_assert(std::is_same<j_0, aml::conslist<>>::value, "");
+        static_assert(std::is_same<j_1, aml::conslist<>>::value, "");
+        static_assert(std::is_same<j_2, aml::conslist<>>::value, "");
+        static_assert(std::is_same<j_3, aml::conslist<idx<1> > >::value, "");
+        static_assert(std::is_same<j_4, aml::conslist<idx<1>, idx<2>, idx<3>, idx<4>, idx<5>, idx<6> > >::value, "");
+        static_assert(std::is_same<j_5, j_4>::value, "");
+
+        static_assert(std::is_same< aml::join<list_0, list_1, list_2, list_3>, j_4 >::value, "");
     }
     
 }
@@ -81,9 +126,12 @@ namespace test::conslist
 
 int main()
 {
-    void (*test_set[])() = { test::conslist::test_empty_list,
-                             test::conslist::test_non_empty_list,
-                             test::conslist::test_conditional                             
+    void (*test_set[])() =
+    {
+        test::conslist::test_empty_list,
+        test::conslist::test_non_empty_list,
+        test::conslist::test_join
+
     };
 
     for ( auto test : test_set )

@@ -11,10 +11,7 @@ namespace aml
     template<template<typename...> class Pred>
     struct find    
     {
-         // returns conslist<X>  with
-        // X the first type in Args to satisfy Pred<X>::eval() == true.
-        // If such a type X does not exist, then the empty list
-        // conslist<> is returned.
+    private:
         template<typename... X>
         struct in_
         {
@@ -61,6 +58,11 @@ namespace aml
                 >;                        
         };
 
+    public:
+         // returns conslist<X>  with
+        // X the first type in Args to satisfy Pred<X>::eval() == true.
+        // If such a type X does not exist, then the empty list
+        // conslist<> is returned.
         template<typename... X>
         using in = typename in_<X...>::type;
     };   

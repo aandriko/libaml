@@ -75,6 +75,16 @@ namespace test::exponent
         static_assert( std::is_same< power<exp<infinity>, t0>, t3 >::value, ""); // no typename type in t3
         
         static_assert( std::is_same< power<exp<infinity>, s0>, s3 >::value, ""); // no typename s3
+
+        struct loop
+        {
+            using type = loop;
+        };
+
+        // Check the infinite sequence loop::type::type::type.... with loop::type == loop
+        static_assert(std::is_same< power<exp<infinity>, loop>, loop>::value, ""); 
+        
+
     }
 
     

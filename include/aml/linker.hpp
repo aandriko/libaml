@@ -1,16 +1,16 @@
 #pragma once
 
-#include "./basic_types.hpp" 
+#include "./basic_types.hpp"
 #include "./find.hpp"
 
 namespace aml
 {
     template<typename...> struct linker;
 
-    
+
     template<typename...> struct signatures;
 
-    
+
     template<typename Symbol, template<typename...> class SubType>
     struct subtype
     {
@@ -20,21 +20,21 @@ namespace aml
 
 
         friend  struct signatures<>;
-        
-        
+
+
         template<typename Symbol_>
         static constexpr bool is_indexed_by_symbol() { return is_same<Symbol, Symbol_>::eval(); }
 
-        
+
     public:
         using ignore_linker = subtype<Symbol, ignore_linker_in_subtype>;
 
-        
+
         template<typename... X>
         using resolve_with = SubType<X...>;
     };
 
-    
+
     template<typename... Signatures>
     struct signatures
     {
@@ -55,7 +55,7 @@ namespace aml
         template<typename...>
         friend struct linker;
 
-        
+
         template<typename Symbol>
         struct fix_symbol
         {
@@ -69,29 +69,29 @@ namespace aml
             };
         };
 
-        
+
         template<typename... Symbol>
         struct check_symbol_existence
-            : public conslist<Symbol...>               
+            : public conslist<Symbol...>
         {
             static_assert(sizeof...(Symbol) == 1, "Symbol does not exist");
         };
     };
 
-    
+
     template
     <
         typename...                    Symbol,
         template<typename...> class... Subtype,
         typename...                    Parameters
     >
-    struct linker< signatures< aml::subtype<Symbol, Subtype>... >, Parameters... >    
+    struct linker< signatures< aml::subtype<Symbol, Subtype>... >, Parameters... >
     {
     private:
         using this_linker = linker< signatures< aml::subtype<Symbol, Subtype>... >, Parameters... > ;
 
-        
-    public:        
+
+    public:
         template<typename Symbol_, typename... Args>
         using subtype =
             typename
@@ -101,14 +101,14 @@ namespace aml
                ::head
                ::template resolve_with<Args...>;
 
-            
+
         struct algebraic_type
         :
-            public Subtype<this_linker, Parameters... >... 
+            public Subtype<this_linker, Parameters... >...
         {
             using structure = this_linker;
 
-            
+
             template<typename Symbol_>
             using subtype = typename this_linker::template subtype<Symbol_, Parameters...>;
 
@@ -128,13 +128,13 @@ namespace aml
             { }
 
             constexpr algebraic_type& operator=(algebraic_type const&) = default;
-            constexpr algebraic_type& operator=(algebraic_type&&)      = default;                
+            constexpr algebraic_type& operator=(algebraic_type&&)      = default;
 
-            
+
             template<typename Symbol_>
             constexpr auto const& csubref() const { return static_cast< subtype<Symbol_> const& >(*this); }
 
-            
+
             template<typename Symbol_>
             constexpr auto const& subref() const { return csubref(); }
 
@@ -143,7 +143,7 @@ namespace aml
             constexpr auto& subref() { return static_cast< subtype<Symbol_>& >(*this); }
         };
 
-        
+
         template<typename... X>
         using abstract_type = typename linker< signatures< aml::subtype<Symbol, Subtype>... >, X... >::algebraic_type;
     };

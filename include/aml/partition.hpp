@@ -19,25 +19,25 @@ namespace aml
             using accepted = conslist<>;
             using rejected = conslist<>;
         };
-        
+
     private:
         template<typename...>
         friend struct partition;
 
         template<typename Accept, typename Reject>
-        struct collector 
+        struct collector
         {
             struct accept_
             {
                 template<typename X>
-                using add = collector<typename Accept::template rcons<X>, Reject>;
+                using add = collector<typename Accept::template cons<X>, Reject>;
             };
 
-            
+
             struct reject_
             {
                 template<typename X>
-                using add = collector<Accept, typename Reject::template rcons<X>>;
+                using add = collector<Accept, typename Reject::template cons<X>>;
             };
 
             struct result
@@ -56,7 +56,7 @@ namespace aml
                             typename Collector::accept_,
                             typename Collector::reject_>::template add<X>;
         };
-    };       
+    };
 
 
     template<typename H, typename... T>
@@ -71,7 +71,7 @@ namespace aml
                                                               template scan_argument,
 
                                             aml::partition<>::collector< conslist<>, conslist<> >
-            
+
                                          >::result;
-    };      
+    };
 }

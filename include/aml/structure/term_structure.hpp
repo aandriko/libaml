@@ -1,21 +1,22 @@
 #pragma once
 
-#include "../exponent.hpp"
-#include "../string.hpp"
+
+#include "../basic_types.hpp"
+
 
 namespace aml::structure
 {
     template<typename...>
     struct term;
 
-    
+
     template<typename Linker, template<typename...> class F, typename... X>
     struct term<Linker, F<X...> >
     {
         template<typename... Y>
         using function = F<Y...>;
 
-        using subterms = typename Linker::template subtype< decltype("list"_), X...>;
+        using subterms = typename conslist<X...>::template apply<Linker::template abstract_type>;
     };
 
 
@@ -25,8 +26,8 @@ namespace aml::structure
         template<typename... X>
         using function = aml::identity<X...>;
 
-        using subterms = typename Linker::template subtype<decltype("list"_), Atomic_Term>;
+        using subterms = typename conslist<Atomic_Term>::template apply<Linker::template abstract_type>;
     };
-    
+
 
 }

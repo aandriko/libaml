@@ -7,7 +7,7 @@ namespace aml
 {
     template<typename...>
     struct sort;
-        
+
 
     template<>
     struct sort<>
@@ -18,8 +18,8 @@ namespace aml
     private:
         template<typename...>
         friend struct sort;
-        
-        
+
+
         template<int n, typename T>
         struct stabilizer
         {
@@ -27,22 +27,22 @@ namespace aml
             using type = T;
         };
 
-        
+
         template<typename X, typename ConsList>
         using apply_stabilizer = typename ConsList::template cons< stabilizer<ConsList::size(), X> >;
 
-        
+
         template<typename X, typename ConsList>
         using remove_stabilizer = typename ConsList::template cons<typename X::type>;
 
-        
+
         template<template<typename...> class Less>
         struct fix_comparison
         {
             template<typename... Args>
             struct sort_non_empty_list;
 
-            
+
             template<typename... Args>
             struct lazy_sort
             {
@@ -51,19 +51,19 @@ namespace aml
                                           bool_<sizeof...(Args) == 0>,
 
                                           hull<conslist<>>,
-                                                         
+
                                           sort_non_empty_list<Args...>
 
                     >::type;
             };
-                       
+
 
             template<typename... Args>
             struct sort_non_empty_list
-            {            
+            {
                 using pivot = typename conslist<Args...>::head;
                 using tail  = typename conslist<Args...>::tail;
-                
+
                 template<typename X>
                 struct predicate
                 {
@@ -85,7 +85,7 @@ namespace aml
 
                 using partition_t = typename tail::template apply<aml::partition>::template with<predicate>;
 
-                
+
                 using type = aml::join
                              <
                                  typename partition_t::accepted::template apply<lazy_sort>::type,
@@ -94,7 +94,7 @@ namespace aml
 
                                  typename partition_t::rejected::template apply<lazy_sort>::type
                              >;
-                
+
             };
 
             template<typename... Args>
@@ -109,7 +109,7 @@ namespace aml
     {
         template<template<typename...> class Less>
         using with = typename conslist<H, T...>::reverse
-            
+
                                                ::template rfold_with
                                                           <
                                                               sort<>::template apply_stabilizer,
@@ -118,10 +118,10 @@ namespace aml
 
                                                           >
                                                 ::reverse
-            
+
                                                 ::template apply< sort<>::template fix_comparison<Less>::template sort >
-                        
-                                                ::template rfold_with<sort<>::template remove_stabilizer, conslist<>>;            
-            
-    }; 
-}                      
+
+                                                ::template rfold_with<sort<>::template remove_stabilizer, conslist<>>;
+
+    };
+}

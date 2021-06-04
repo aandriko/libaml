@@ -6,10 +6,10 @@
 
 namespace aml
 {
-    
-    
+
+
     template<template<typename...> class Pred>
-    struct find    
+    struct find
     {
     private:
         template<typename... X>
@@ -17,45 +17,51 @@ namespace aml
         {
             template<typename... Y>
             using this_template = in_<Y...>;
-            
-            using type =
 
-                eval
-                <
-                    aml::conditional
-                    <
-                        bool_<sizeof...(X) == 0>,
-                
-                        conslist<>,
+            using type  =  eval
+                           <
+                               aml::conditional
+                               <
+                                   bool_<sizeof...(X) == 0>,    conslist<>,
 
-                        apply
-                        <
-                            0,
+                                   apply
+                                   <
+                                       0,
 
-                            aml::conditional,
-                        
-                            apply<0, Pred,  apply<0, aml::head, conslist<X...> > > ,
-                        
-                            apply<1, conslist, apply<1, head, conslist<X...> >  >,
-                        
-                            apply
-                            <
-                                1,
 
-                                add_type,
-                                
-                                apply
-                                <
-                                    1,
-                                    
-                                    bra<this_template>::template ket,
-                                    
-                                    apply<1, tail, conslist<X...> >
-                                >
-                            >
-                        >
-                    >
-                >;                        
+                                       aml::conditional,
+
+
+                                       apply
+                                       <
+                                           0,    Pred,    apply
+                                                          <
+                                                              0,    aml::head,    conslist<X...>
+                                                          >
+                                       >,
+
+                                       apply
+                                       <
+                                           1,    conslist,    apply
+                                                              <
+                                                                  1,    head,    conslist<X...>
+                                                              >
+                                       >,
+
+
+                                       apply
+                                       <
+                                           1,    add_type,    apply
+                                                              <
+                                                                  1,    bra<this_template>::template ket,    apply
+                                                                                                             <
+                                                                                                                 1, tail, conslist<X...>
+                                                                                                             >
+                                                              >
+                                       >
+                                   >
+                               >
+                           >;
         };
 
     public:
@@ -65,5 +71,5 @@ namespace aml
         // conslist<> is returned.
         template<typename... X>
         using in = typename in_<X...>::type;
-    };   
+    };
 }

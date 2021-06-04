@@ -4,14 +4,14 @@
 
 
 namespace aml
-{    
+{
     inline void infinity() { }
 
-    
+
     template<auto n>
     struct exp;
 
-    
+
     template<>
     struct exp<0>
     {
@@ -21,14 +21,14 @@ namespace aml
         static constexpr auto eval() { return 0; }
     };
 
-    
+
     template<int n>
     struct exp<n>
     {
     private:
         template<typename... T>
         using T_ = typename enable<typename conslist<T...>::head>::template if_<bool_<sizeof...(T) == 1> >;
-        
+
     public:
         template<typename... T>
         using power = typename exp<n-1>::template power< typename T_<T...>::type >;
@@ -43,7 +43,7 @@ namespace aml
     private:
         template<auto>
         friend struct exp;
-        
+
         template<typename X, typename R = typename X::type>
         static constexpr R add_type_if_possible_(void*, void*);
 
@@ -64,7 +64,7 @@ namespace aml
         {
             using type = typename next_exp< T_<T...> >::template power< next_T<T_<T...> > >;
         };
-        
+
     public:
         template<typename... T>
         using power =  typename power_<T...>::type;
@@ -72,7 +72,7 @@ namespace aml
         static constexpr auto eval() { return infinity; }
     };
 
-    
+
     template<typename... Exponent_and_Type>
     using power = typename
         enable
@@ -91,7 +91,7 @@ namespace aml
     template<template<typename...> class...>
     struct function;
 
-    
+
     template<>
     struct function<>
     {
@@ -116,10 +116,10 @@ namespace aml
                 bool_<Exp::eval() == 0>::template conditional
                                                   <
                                                       aml::function<identity>,
-            
+
                                                       aml::function<apply_to_>
 
-                                                  >::template apply_to<X...>;                
+                                                  >::template apply_to<X...>;
         };
-    };    
+    };
 }

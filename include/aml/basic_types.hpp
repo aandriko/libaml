@@ -43,7 +43,7 @@ namespace aml
     using true_  = bool_<true>;
     using false_ = bool_<false>;
 
-    
+
     template<typename...> using top    = true_;
     template<typename...> using bottom = false_;
 

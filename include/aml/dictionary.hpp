@@ -32,11 +32,11 @@ namespace aml
     public:
 
         template<typename... Key>
-        using partial_map = conslist< no_value_<Key>... >;
+        using partial_lookup = conslist< no_value_<Key>... >;
 
 
         template<typename... Zero_Keys>
-        using map = typename conslist<>::template check<sizeof...(Zero_Keys) == 0>;
+        using lookup = typename conslist<>::template check<sizeof...(Zero_Keys) == 0>;
 
 
         template<typename... Entries>
@@ -202,29 +202,29 @@ namespace aml
 
 
         template<typename... Key>
-        using partial_map  =  conslist
-                              <
-                                  typename find
-                                  <
-                                      composition
-                                      <
-                                          curry<1, is_same>::template apply_to<Key>::template apply_to,
-                                          key
-                                      >::
-                                      template apply_to
-                                  >::
-                                  template in<Entries...>
-                                  ::template pointwise_apply<value> ...
-                              >;
+        using partial_lookup  =  conslist
+                                 <
+                                     typename find
+                                     <
+                                         composition
+                                         <
+                                             curry<1, is_same>::template apply_to<Key>::template apply_to,    key
+                                         >::
+                                         template apply_to
+                                     >::
+                                     template in<Entries...>
+                                     ::template pointwise_apply<value> ...
+                                 >;
 
 
         template<typename... Keys>
-        using map  =  typename partial_map<Keys...>::
-                      template check
-                      <
-                          join<partial_map<Keys...> >::size() == sizeof...(Keys) &&
-                          "Not every key has been found in the dictionary!"
-                      >::template apply<join>;
+        using lookup  =  typename partial_lookup<Keys...>::
+                         template check
+                         <
+                             join<partial_lookup<Keys...> >::size() == sizeof...(Keys) &&
+                             "Not every key has been found in the dictionary!"
+                         >::
+                         template apply<join>;
 
 
 

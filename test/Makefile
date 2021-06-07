@@ -5,7 +5,7 @@ all_programs := $(patsubst %.cpp, bin/%, $(wildcard *.cpp))
 all: $(all_programs)
 
 bin/.dirstamp:
-	mkdir -p bin 
+	mkdir -p bin
 	touch $@
 
 bin/% : %.cpp bin/.dirstamp

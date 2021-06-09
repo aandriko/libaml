@@ -21,10 +21,10 @@ namespace test::dictionary
         static_assert(d::contains_all_keys<void, int>::eval() == false, "");
         static_assert(std::is_same< d::subdictionary<>, d>::value, "");
         // using error_1 = d::subdictionary<int>;
-        // using error_2 = d::map<int>
-        static_assert(std::is_same<d::map<>, aml::conslist<> >::value, "");
-        static_assert(std::is_same<d::partial_map<>, aml::conslist<> >::value, "");
-        static_assert(std::is_same<d::partial_map<int, double>, aml::conslist< aml::conslist<>, aml::conslist<> > >::value, "");
+        // using error_2 = d::lookup<int>
+        static_assert(std::is_same<d::lookup<>, aml::conslist<> >::value, "");
+        static_assert(std::is_same<d::partial_lookup<>, aml::conslist<> >::value, "");
+        static_assert(std::is_same<d::partial_lookup<int, double>, aml::conslist< aml::conslist<>, aml::conslist<> > >::value, "");
 
         using d1 = aml::dictionary<>::add_entries< aml::entry<int, void> >;
         using d2 = aml::dictionary<>::add_entries< aml::entry<int, void>, aml::entry<int*, void*> >;
@@ -63,19 +63,19 @@ namespace test::dictionary
                        >::value, "");
 
 
-        static_assert( std::is_same< d::map<>, aml::conslist<> >::value, "");
+        static_assert( std::is_same< d::lookup<>, aml::conslist<> >::value, "");
 
-        static_assert( std::is_same< d::partial_map<int**, float, int>,
+        static_assert( std::is_same< d::partial_lookup<int**, float, int>,
                        aml::conslist< aml::conslist<void**>, aml::conslist<>, aml::conslist<void> > >::value, "");
 
-        static_assert( std::is_same< d::partial_map<int, float, int**>,
+        static_assert( std::is_same< d::partial_lookup<int, float, int**>,
                        aml::conslist< aml::conslist<void>, aml::conslist<>, aml::conslist<void**> > >::value, "");
 
 
-        // using error_4 = d::map<int**, float, int>;
+        // using error_4 = d::lookup<int**, float, int>;
 
-        static_assert( std::is_same< d::map<int**, int>, aml::conslist<void**, void> >::value, "");
-        static_assert( std::is_same< d::map<int, int**>, aml::conslist<void, void**> >::value, "");
+        static_assert( std::is_same< d::lookup<int**, int>, aml::conslist<void**, void> >::value, "");
+        static_assert( std::is_same< d::lookup<int, int**>, aml::conslist<void, void**> >::value, "");
 
         static_assert( std::is_same< d::add_entries< aml::entry<int, float> >,
                        aml::dictionary< aml::entry<int, float>, aml::entry<int*, void*>, aml::entry<int**, void**> > >::value, "");

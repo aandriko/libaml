@@ -54,10 +54,9 @@ namespace aml::compiler::tokenization
 
 
     template< typename     Start
-            , typename     Acceptor_Set
             , typename...  Arrows
             >
-    struct dfa< Start, Acceptor_Set, Arrows... >
+    struct dfa< Start, Arrows... >
     {
     private:
         using transition_map  =  dictionary< entry<typename Arrows::source_node, Arrows>... >;
@@ -78,7 +77,6 @@ namespace aml::compiler::tokenization
     public:
 
         using start      =  Start;
-        using acceptors  =  Acceptor_Set;
 
         template< typename Node
                 , typename Label
@@ -103,19 +101,6 @@ namespace aml::compiler::tokenization
     };
 
 
-    struct unfinished_token;
-
-
-    template< typename Token
-            , typename Value
-            >
-    struct token_error
-    {
-        using type   =  Token;
-        using value  =  Value;
-    };
-
-
     template< typename dfa
             , typename Input
             , typename Node
@@ -124,93 +109,45 @@ namespace aml::compiler::tokenization
             >
     struct lexer_step
     {
-        // 1) Input == conslist<> and Scanned != conslist<> indicates an error (unfinished token), abnormal termination
-        // 2) Input == conslist<> and Scanned == conslist<> is the condition of normal termination
-        // 3) Input != conslist<> indicates that the parser is runing:
-        //
-        //      subcase 3a) no transition exists and the state "Node" is conctained in dfa::acceptors:
-        //                  token is written to output
-        //      subcase 3b) no transition exists and the state "Note" is not contained in dfa::acceptors:
-        //                  The token token_error<Node, Scanned> is written to output.
-        //      subcase 3c) Node is a non-final state and the input stream is not empty. Then the Scanned is updated.
-
-        struct terminate_with_unfinished_token
-        {
-            using output_  =  typename Output::template rcons<token_error<unfinished_token, Scanned > >;
-
-            using type = lexer_step< dfa, conslist<>, typename dfa::start, conslist<>, output_ >;
-        };
-
         struct terminate
         {
-            //            using type   = lexer_step<dfa, conslist<>, dfa::start, conslist<>, Output>;
-            using output  =  Output;
-        };
+            using output  =  typename bool_< Scanned::size() != 0 >::
+                             template conditional< typename Output::template rcons< token< Node, Scanned > >,  Output >;
 
-        struct write_token_error
-        {
-            using output_  =  typename Output::template rcons< token_error< Node, Scanned > >;
-
-            using type = lexer_step<dfa, Input, typename dfa::start, conslist<>, output_>;
-        };
-
-
-        struct write_valid_token
-        {
-            using output_  =  typename Output::template rcons< token< Node, Scanned > > ;
-
-            using type = lexer_step<dfa, Input, typename dfa::start, conslist<>, output_>;
+            using type    =  lexer_step< dfa, conslist<>, typename dfa::start, conslist<>, output >;
         };
 
 
         struct consume_symbol
         {
-            using symbol_   =  head< Input >;
-            using node_     =  typename dfa::template transition< Node, symbol_ >::head;
-            using input_    =  tail<Input>;
-            using scanned_  =  typename Scanned::template rcons< symbol_ >;
+            using symbol_         = head<Input>;
+            using wrapped_node_   = typename dfa::template transition<Node, symbol_>;
 
-            using type = lexer_step< dfa, input_, node_, scanned_, Output >;
+            struct write_out
+            {
+                using output_  =  typename Output::template rcons< token< Node, Scanned > >;
+                using type     =  lexer_step< dfa, Input, typename dfa::start, conslist<>, output_ >;
+            };
+
+            struct scan
+            {
+                using node_   = head< wrapped_node_ >;
+                using input_  = tail<Input>;
+                using scanned_ = typename Scanned::template rcons<symbol_>;
+
+                using type = lexer_step< dfa, input_, node_ , scanned_, Output>;
+            };
+
+            using type = typename conditional< is_same<wrapped_node_, conslist<> >,  write_out,  scan >::type;
         };
 
-
-        struct final_step
-        {
-            using type = typename conditional< bool_<Scanned::size() == 0>,
-                                               terminate,
-                                               terminate_with_unfinished_token >::type;
-        };
-
-
-        struct intermediate_step
-        {
-            using symbol_      =  head< Input >;
-            using transition_  =  typename dfa::template transition< Node, symbol_ >;
-
-            using type  =  typename conditional
-                                    <
-                                        typename dfa::acceptors::template contains<Node>,
-
-                                        write_valid_token,
-
-                                        conditional
-                                        <
-                                            is_same<transition_, conslist<> >,
-
-                                            write_token_error,
-
-                                            consume_symbol
-                                        >
-                                    >::type;
-        };
-
-        using type = typename conditional< bool_< Input::size() == 0 >, final_step, intermediate_step >::type;
+        using type = typename conditional< bool_<Input::size() == 0>, terminate, consume_symbol>::type;
+        using output = Output;
     };
 
 
     template<typename dfa, typename Input>
-    using lexer  =  //typename power< exp<infinity>, lexer_step<dfa, Input, typename dfa::start, conslist<>, conslist<> > >::output;
-        typename lexer_step<dfa, Input, typename dfa::start, conslist<>, conslist<> >::type;
+    using lexer  =  typename power< exp<infinity>, lexer_step<dfa, Input, typename dfa::start, conslist<>, conslist<> > >::output;
 
 }
 
@@ -241,9 +178,7 @@ using start_arrows = arrows<start_t, target<one_t, is_one>, target<semicolon_t, 
 using arrows_from_one_t = arrows<one_t, target<one_t, is_one> >;
 using arrows_from_semicolon_t = arrows<semicolon_t, target<semicolon_t, is_semicolon> >;
 
-using dfa_t = dfa<  start_t,    aml::set<semicolon_t, one_t>,    start_arrows,
-                                                                 arrows_from_one_t,
-                                                                 arrows_from_semicolon_t >;
+using dfa_t = dfa<  start_t,  start_arrows,  arrows_from_one_t,  arrows_from_semicolon_t >;
 
 
 #include "aml/string.hpp"

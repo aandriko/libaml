@@ -287,15 +287,21 @@ namespace aml
     };
 
 
-    template
-    <
-        template<typename...> class    G,
-        template<typename...> class... F
-    >
+    template< template<typename...> class    G
+            , template<typename...> class... F
+            >
     struct composition<G, F...>
     {
         template<typename... X>
         using apply_to = G< typename composition<F...>::template apply_to<X...> >;
+    };
+
+
+    template< template<typename...> class... F >
+    struct pointwise_action
+    {
+        template<typename... X>
+        using apply_to = conslist< F<X>... >;
     };
 
 }

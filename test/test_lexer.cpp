@@ -3,6 +3,8 @@
 #include "aml/set.hpp"
 
 
+#ifdef ACTIVATE_TEST_LEXER
+
 namespace aml::compiler::tokenization
 {
 
@@ -189,7 +191,7 @@ template<auto... objects>
 using make_type_list = aml::conslist< aml::object<objects>... >;
 
 
-using listing = decltype("1"_)::apply<make_type_list>;
+using listing = decltype("1;11;;1;1;;"_)::apply<make_type_list>;
 
 
 using tokenized = lexer<dfa_t, listing>;
@@ -201,5 +203,12 @@ using tokenized = lexer<dfa_t, listing>;
 int main()
 {
     std::cout << boost::core::demangle(typeid(tokenized).name()) << std::endl;
+    std::cout << listing::size() << std::endl;
 
 }
+
+#else
+
+int main() { }
+
+#endif

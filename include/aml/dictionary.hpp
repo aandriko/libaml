@@ -184,6 +184,8 @@ namespace aml
                          template check<    partial_lookup<Keys...>::template apply<join>::size() == sizeof...(Keys) &&
                                             "Not every key has been found in the dictionary!">;
 
+        template< typename Key >
+        using at  =  typename lookup< Key >::head;
 
 
         template< typename... More_Entries >

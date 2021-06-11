@@ -7,7 +7,7 @@ namespace aml
     template<int n, template<typename...> class F, typename... X>
     struct apply;
 
-    
+
     template<int n, template<typename...> class F>
     struct apply<n, F>
     {
@@ -15,11 +15,11 @@ namespace aml
         using with_arguments = apply<n, F, X...>;
     };
 
-    
+
     template<typename... Term>
     struct evaluation;
 
-    
+
     template<typename Term>
     struct evaluation<Term>
     {
@@ -35,7 +35,7 @@ namespace aml
         using type = evaluation<Term>;
     };
 
-    
+
     template<template<typename...> class F, typename... X>
     struct evaluation< apply<0, F, X...> >
     {
@@ -67,7 +67,7 @@ namespace aml
     template<typename...>
     struct pwer;
 
-    
+
     template<typename... Term>
     using eval = typename power<exp<infinity>, evaluation<Term...> >::term;
 
@@ -81,6 +81,6 @@ namespace aml
                                  conslist<X...>::head::eval(),
                                  conslist<X...>::tail::head::template apply_to
 
-                             >::template with_arguments        
+                             >::template with_arguments
                           >;
-}       
+}

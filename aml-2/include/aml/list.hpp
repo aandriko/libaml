@@ -3,18 +3,8 @@
 
 namespace aml
 {
-    template<typename...>
+    template< typename... >
     struct list;
-
-
-    template< template< typname... > class List
-            , int... n
-            >
-    struct multi_index
-    {
-        using as_types = list< multi_index<List, n>... >;
-        eval(); ...
-    };
 
 
     template< int n
@@ -23,9 +13,9 @@ namespace aml
     struct drop
     {
         template< typename... X >
-        using from  =  typename List< X... >::
-                       tail::
-                       template apply< typename drop< n-1 >::template from >;
+        using apply_to  =  typename List< X... >::
+                           tail::
+                           template apply< typename drop< n-1 >::template apply_to >;
     };
 
 
@@ -33,7 +23,7 @@ namespace aml
     struct drop< 0 >
     {
         template<typename... X>
-        using from = list< X... >;
+        using from  =  List< X... >;
     };
 
 
@@ -43,10 +33,10 @@ namespace aml
     struct take
     {
         template< typename... X >
-        using from  =  typename List::
-                       template reverse< X... >::
-                       template apply< drop< sizeof...(X) - n >::template from >::
-                       reverse;
+        using apply_to  =  typename List::
+                           template reverse< X... >::
+                           template apply< drop< sizeof...(X) - n >::template apply_to >::
+                           reverse;
     };
 
 
@@ -56,7 +46,7 @@ namespace aml
     public:
 
         template<typename... X>
-        using cons  =  typename list<X...>::reverse;
+        using cons  =  typename list<X...>;
 
 
         template<typename... X>
@@ -77,6 +67,18 @@ namespace aml
         template< template< typename... > class
                 , typename Z
                 >
+        using rscan_with  =  Z;
+
+
+        template< template< typename... > class
+                , typename Z
+                >
+        using lscan_with  =  Z
+
+
+        template< template< typename... > class
+                , typename Z
+                >
         using rfold_with = Z;
 
 
@@ -86,12 +88,23 @@ namespace aml
         using lfold_with = Z;
 
 
-        template<int n>
-        using drop  =  apply<aml::drop<n>::template from>;
+        template< template< typename...> class
+                , typename b
+                >
+        using map_accum_left  =  conslist<b, conslist<> >;
+
+
+        template< template< tyepname...> class
+                , typename b >
+        uisng map_accum_right  = conslist<b, conslist<> >;
 
 
         template<int n>
-        using take  =  apply<aml::take<n>::template from>;
+        using drop  =  apply<aml::drop<n>::template apply_to>;
+
+
+        template<int n>
+        using take  =  apply<aml::take<n>::template apply_to>;
 
 
         static constexpr auto size() { return 0; }
@@ -120,6 +133,10 @@ namespace aml
         using reverse  =  typename tail::reverse::template rcons<H>;
 
 
+        using last     =  typename reverse::head;
+        using init     =  typename reverse::tail::reverse;
+
+
         template<template<typename...> class F>
         using apply  =  F<H, T...>;
 
@@ -128,26 +145,61 @@ namespace aml
         using pointwise_apply  =  list< F< H >,  F< T >... >;
 
 
+        template< template< typename... > class F
+                , typename Z
+                >
+        using rfold_with =  F< head, typename tail::template rfold_with<F, Z> >;
+
+
         template< template<typename...> class F
                 , typename Z
                 >
-        using rfold_with =  F<H, typename list<T...>::template rfold_with<F, Z> >;
+        using lfold_with  =  F< typename init::template lfold_with<F, Z>, last >;
 
 
-        template< template<typename...> class F
+        template< template< typename... > class F
                 , typename Z
+                , typename Already_Scanned  =  typename tail::
+                                               template rscan_with< F, Z >
                 >
-        using lfold_with  =  F< typename reverse::tail::reverse::template lfold_with<F, Z>,
+        using rscan_with  = typename Already_Scanned::
+                            head::
+                            template cons< F< head, typename Already_Scanned::head > >;
 
-                                typename reverse::head>;
+
+        template< template< typename... > class F
+                , typename Z
+                , typename Already_Scanned  =  typename tail::
+                                               template lscan_with<F, Z>
+                >
+        using lscan_with  =  typename Already_Scanned::
+                             last::
+                             template rcons< F< typename Already_Scanned::last, last > >;
+
+        // (b -> a -> (b, c) ) -> b -> [a] -> (b, [c])
+        template< template< typename...> class F // (b-> a -> (b, c)
+                , typename b
+                >
+        using map_accum_left  = tail::template apply<map_accum_left, b>
+
+            conslist<b, conslist<> >;
+
+
+        template< template< tyepname...> class
+                , typename b >
+        uisng map_accum_right  = conslist<b, conslist<> >;
 
 
         template<int n>
-        using drop  =  apply<aml::drop<n>::template from>;
+        using drop  =  apply<aml::drop<n>::template apply_to>;
 
 
         template<int n>
-        using take  =  apply<aml::take<n>::template from>;
+        using take  =  apply<aml::take<n>::template apply_to>;
+
+
+        template<int... n>
+        using at  =  list< typename drop<n>::head... >
 
 
         static auto constexpr size() { return 1 + sizeof...(T); }
@@ -159,11 +211,10 @@ namespace aml
 
 
     template<typename... X>
-    using reverse = typename conslist<X...>::reverse;
-
-
-    template< typename... List >
-    using join  =  decltype( (List() + ... ) );
+    struct size
+    {
+        static constexpr auto eval() { return sizeof...(X); };
+    };
 
 
     template<typename... X>
@@ -175,10 +226,19 @@ namespace aml
 
 
     template<typename... X>
-    struct size
-    {
-        static constexpr auto eval() { return sizeof...(X); };
-    };
+    using reverse  =  typename list<X...>::reverse;
+
+
+    template<typename... X>
+    using init  =  typename list<X...>::init;
+
+
+    template<typename... X>
+    using last  =  typename list<X...>::last;
+
+
+    template< typename... List >
+    using join  =  decltype( (List() + ... ) );
 
 
     template<typename... X>
@@ -189,46 +249,46 @@ namespace aml
     using rcons = decltype( head<X...>() + tail<X...>() );
 
 
-    template<int n, typename... X>
-    using take_elements = typename take<n>::template from<X...>;
-
-
-    template<int n, typename... X>
-    using drop_elements = typename drop<n>::template from<X...>;
-
-
     template<typename... List>
     using join  =  decltype( List() + ... );
 
 
-    template<typename... List>
-    using join_and_revert =  typename join<List...>::reverse;
+    template<typename... X>
+    using reverse = typename conslist<X...>::reverse;
 
 
     // lfold<F, Z, X1, X2, X3... XN> = F<Z, F< X1, F< X2, .... , F<Xn> > ....> >
     template<typename... X>
-    using lfold  = typename tail<tail<X...> >::
-                   template lfold_with<    head<X...>::template apply,
-                                           head<tail<X...> >    >;
+    using lfold  = typename drop<2>::template apply_to<X...>::
+                   template lfold_with
+                   <
+                       typename take<0>::template apply_to<X...>::template apply_to,
+                       typename take<1>::template apply_to<X...>
+                   >;
+
 
 
     // lfold<F, Z, X1, X2, X3... XN> =
     //                      F<X1, ... F<X{n-2}, F< X{N-1}, F<XN, Z>>> ... >
     template<typename... X>
-    using rfold  = typename tail<tail<X...> >::
-                   template lfold_with<    head<X...>::template apply,
-                                           head<tail<X...> >    >;
-
-
-    template<typename... X>
-    using pointwise_apply  =  typename tail<X...>::
-                              template pointwise_apply< head<X...>::
-                                                        template apply_to >;
+    using rfold  = typename drop<2>::template apply_to<X...>::
+                   template rfold_with
+                   <
+                       typename take<0>::template apply_to<X...>::template apply_to,
+                       typename take<1>::template apply_to<X...>
+                   >;
 
 
     // intersperse<Z, X1, X2, X3 ... > = list<X1, Z, X2, Z, X3, Z ... >
     template<typename... X>
-    using intersperse  =  typename list< list< X, head< X...> >... >::tail::
+    using intersperse  =  typename list< list< X, head< X... > >... >::tail::
                           template apply<join>;
+
+
+    template<typename... X>
+    using map  =  typename tail<X...>::
+                  template pointwise_apply< head<X...>::template apply_to >;
+
+
 
 }

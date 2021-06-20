@@ -20,7 +20,7 @@ namespace aml
 
 
     template< template<typename...> class List >
-    struct drop< 0 >
+    struct drop< 0, List >
     {
         template<typename... X>
         using from  =  List< X... >;
@@ -40,7 +40,14 @@ namespace aml
     };
 
 
-    template<>
+    template<typename... X>
+    struct size
+    {
+        static constexpr auto eval() { return sizeof...(X); };
+    };
+
+
+template<>
     struct list<>
     {
     public:
@@ -91,12 +98,13 @@ namespace aml
         template< template< typename...> class
                 , typename b
                 >
-        using map_accum_left  =  conslist<b, conslist<> >;
+        using map_accum_left_with  =  list<b, conslist<> >;
 
 
         template< template< tyepname...> class
-                , typename b >
-        uisng map_accum_right  = conslist<b, conslist<> >;
+                , typename b
+                >
+        uisng map_accum_right_with  = list<b, conslist<> >;
 
 
         template<int n>
@@ -107,11 +115,46 @@ namespace aml
         using take  =  apply<aml::take<n>::template apply_to>;
 
 
+        template<template<typename...> class>
+        using split_by_first_occurence_of  =  list< list<>, list<> >;
+
+
+        template<template<typename...> class>
+        struct partition_with : public list< list<>, list<> >
+        {
+            using accepted  =  list<>;
+            using rejected  =  list<>;
+        };
+
+
+        template<template<typename...> class >
+        using sort_with  =  list<>;
+
+
+        template< template<typename...> class >
+        using take_while = list<>;
+
+
+        template< template<typename...> class >
+        using drop_while = list<>;
+
+
         static constexpr auto size() { return 0; }
 
 
         template<typename... Y>
         friend auto operator+(list<Y...>)  ->  list<Y...>;
+
+    private:
+        template<typename...>
+        friend struct list;
+
+
+        template<template<typename...> class>
+        struct sort_
+        {
+            using tyep = list<>;
+        };
     };
 
 
@@ -135,6 +178,7 @@ namespace aml
 
         using last     =  typename reverse::head;
         using init     =  typename reverse::tail::reverse;
+
 
 
         template<template<typename...> class F>
@@ -176,18 +220,39 @@ namespace aml
                              last::
                              template rcons< F< typename Already_Scanned::last, last > >;
 
+
+    public:
         // (b -> a -> (b, c) ) -> b -> [a] -> (b, [c])
         template< template< typename...> class F // (b-> a -> (b, c)
                 , typename b
                 >
-        using map_accum_left  = tail::template apply<map_accum_left, b>
+        using map_accum_left_with  =  list<  typename F< typename init::
+                                                         template map_accum_left_with< F, b >::head,   last >::head,
 
-            conslist<b, conslist<> >;
+                                             typename init::template map_accum_left_with<F, b>::
+                                             tail::head::
+                                             template rcons<  typename F<  typename init::
+                                                                           template map_accum_left_with<F, b>::head,
+
+                                                                           last
+                                                                        >::tail::head  >
+                                          >;
 
 
-        template< template< tyepname...> class
-                , typename b >
-        uisng map_accum_right  = conslist<b, conslist<> >;
+        template< template< typename...> class F // (b-> a -> (b, c)
+                , typename b
+                >
+        using map_accum_right_with  =  list<  typename F< typename tail::
+                                                          template map_accum_right_with< F, b >::head,   last >::head,
+
+                                              typename tail::template map_accum_left<F, b>::
+                                              tail::head::
+                                              template cons<  typename F<  typename tail::
+                                                                           template map_accum_right_with<F, b>::head,
+
+                                                                           last
+                                                                         >::tail::head  >
+                                           >;
 
 
         template<int n>
@@ -207,14 +272,164 @@ namespace aml
 
         template<typename... Y>
         friend auto operator+(list<Y...>)  ->  list<H, T..., Y...>;
+
+
+    private:
+        template<template<typename...> class Pred>
+        struct split_
+        {
+            struct after_head
+            {
+                using type_  =  typename tail::template split_by_forst_occurrence_of<Pred>;
+                using type   =  list<typename type_::head::template rcons< H >, typename type_::tail>;
+            };
+
+            struct at_head
+            {
+                using type  =  list< list<>, list<H, T...> >;
+            };
+        };
+
+    public:
+        template<template<typename...> class Pred>
+        using split_by_first_occurence_of  =  typename drop< static_cast<bool>(Pred<H>::eval()),
+                                                             list< typename split_<P>::after_head, typename split_<P>::at_head > >::
+                                               head::type;
+
+
+    private:
+        template<template<typename...> class Pred>
+        struct partition_tail_
+        {
+            using partition_ = typename tail::template partition_with<Pred>;
+            using add_head_to_accepted_ =  list< typename partition_::accepted::template rcons<head>,
+                                                 partition_::rejected >;
+
+            using add_head_to_rejected_  =  list< typename partition_::accepted,
+                                                 typename partition_::rejected::template rcons<head> >;
+
+            using add_H_ = typename drop <    static_cast<bool>(Pred<H>::eval()),
+                                              add_head_to_rejected_,
+                                              add_head_to_accepted_    >::head;
+        };
+
+    public:
+
+        template<template<typename...> class Pred>
+        struct partition_with
+        :
+            public typename parition_tail_<Pred>::template add_head
+        {
+            using accepted = typename partition_tail_<Pred>::add_H_::head;
+            using rejected = typename partition_tail_<Pred>::add_H_::tail::head;
+        };
+
+
+    private:
+        tmeplate<template<typename...> class Less>
+        struct sort_
+        {
+            template<typename X>
+            using P = Pred<X, H>;
+
+            using lower  =  typename tail::partition_with<P>::accepted::template sort_< Less >::type;
+            using upper  =  typename tail::partition_with<P>::rejected::template sort_< Less >::type;
+
+            using type  =  typename upper::template apply<typename lower::template rcons<H>::template rcons>;
+        };
+
+
+        template<typename List, typename X>
+        using add_indexed_parameter  =  typename List::template rcons< list< X, size< List > > >;
+
+
+        using indexed_list  =  typename list< H, T... >::
+                               template lfold_with<add_indexed_parameter, list<> >;
+
+
+        template< template<typename...> class Less >
+        struct indexed_less
+        {
+            template<typename X, typename Y>
+            struct apply_to
+            {
+                static constexpr eval()
+                {
+                    return    Less<X, Y>::eval()    ||
+                              ( ! Less<Y, X>::eval()  &&  X::tail::head::eval() < Y::tail::head::eval() );
+                }
+            };
+        };
+
+        template<typename X>
+        using remove_index = typename X::head;
+
+    public:
+
+        template<template<typename...> class Less>
+        using sort_with  =  typename indexed_list::template sort_< indexed_less<Less> >::type::template pointwise_apply<remove_index>;
+
+
+    private:
+
+        template< template<typename...> class Predicate
+                , typename Prefix
+                >
+        struct take_while_
+        {
+            struct add_head
+            {
+                using type  =  typename tail::template take_while<Predicate, typename Prefix::rcons<H>>;
+            };
+
+            struct stop
+            {
+                using type  =  Prefix;
+            };
+
+            using type  = typename take< static_cast<bool>(Predicate<H>::eval()), stop, add_head >::type;
+        };
+
+
+        template< template<typename...> class Predicate >
+        struct drop_while_
+        {
+            struct drop_head
+            {
+                using type = typename tail::template drop_while<Predicate>;
+            };
+
+            struct stop
+            {
+                using type = list<H, T...>;
+            };
+
+            using type = typename take< Predicate<H>::eval()
+            
+            
+        }
+
+    public:
+
+        template< template<typename...> class Predicate
+                , typename Prefix = list<>
+                >
+        using take_while  = typename take_while_<Predicate, Prefix>::type;
+
+
+        template<template<typename...> class Predicate>
+        using drop_while;
+
     };
 
 
-    template<typename... X>
-    struct size
-    {
-        static constexpr auto eval() { return sizeof...(X); };
-    };
+
+    //    template<auto... idx>
+    //    struct lambda
+    //    {
+    //        template<typename... X>
+    //        using apply_to = typename list<X...>::template at<idx...>;
+    //    };
 
 
     template<typename... X>
@@ -290,5 +505,14 @@ namespace aml
                   template pointwise_apply< head<X...>::template apply_to >;
 
 
+    template<typename... X>
+    using split_by_first_occurrence  =  typename tail<X...>::template split_by_first_occurrence_of< head<X...>::template apply_to >;
 
+
+    template<typename... X>
+    using partition  =  typename tail<X...>::template partition_with< head<X...>::template apply_to >;
+
+
+    template<typename... X>
+    using sort  =  typename tail<X...>::template sort_with< head<X...>::template apply_to >;
 }

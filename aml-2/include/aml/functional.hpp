@@ -6,30 +6,32 @@
 namespace aml
 {
     template<  template< typename... > class F
-            ,  auto n...
+            ,  auto...  n
             >
     struct curry;
 
 
-    template<  template< typename... > class F  >
+    template< template< typename... > class F
+            , auto n
+            >
     struct curry< F, n >
     {
     private:
 
         template< typename... X >
-        struct apply_F
+        struct bind_args
         {
             static_assert( sizeof...(X) == n,
                            "The number of input arguments for curried function is incorrect." );
 
             template<typename... Y>
             using apply_to  =  F<X..., Y...>;
-        }
+        };
 
     public:
 
         template< typename... X >
-        using apply_to = apply_F<  X... >::type;;
+        using apply_to = bind_args<X...>;
     };
 
 
@@ -48,9 +50,10 @@ namespace aml
             >
     struct curry< F, n, m... >
     {
-        template<typename... X>
-        using apply_to  =  typename curry<    curry< F, m... >::template apply_to, n    >::
-                           template apply_to< X... >;
+        template< typename... X >
+        using apply_to  =  curry<    curry<F, n>::
+                                     template apply_to<X...>::
+                                     template apply_to,          m...    >;
     };
 
 
@@ -59,12 +62,15 @@ namespace aml
             >
     using curry_and_bind  =  typename curry< F, sizeof...(X) >::template apply_to<X...>;
 
+    template<typename F, typename... N>
+    using make_currying = curry< F::template apply_to, N::eval()... >;
+
 
     template< template<typename... > class... >
     struct composition;
 
 
-    template<  template<typename...> class    G,
+    template<  template<typename...> class    G
             ,  template<typename...> class... F
             >
     struct composition< G, F... >
@@ -78,7 +84,7 @@ namespace aml
     struct composition< F >
     {
         template< typename... X >
-        using apply_to  =  F< X... >
+        using apply_to  =  F< X... >;
     };
 
     // identity
@@ -102,7 +108,7 @@ namespace aml
     template<typename... X>
     using identity  =  typename composition<>::template apply_to< X... >;
 
-
+    /*
     template< auto n >
     struct idx
     {
@@ -276,5 +282,5 @@ namespace aml
 
     template<typename... X>
     using evaluate = typename delay<>::template evaluate< X... >;
-
+    */
 }

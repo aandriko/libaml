@@ -14,7 +14,7 @@ namespace aml
     struct subterms;
 
 
-    tmeplate<>
+    template<>
     struct subterms<>
     {
         template<  template< typename... > class F  >
@@ -26,7 +26,7 @@ namespace aml
 
     template< typename    H
             , typename... T >
-    struct subterms
+    struct subterms< H, T... > 
     {
         using head  =  H;
         using tail  =  subterms< T... >;
@@ -43,10 +43,22 @@ namespace aml
             >
     struct term
     {
+    private:
         static_assert(sizeof...(no_args) == 0, "term<> takes only one argument!");
 
+        template<typename Y, typename... no_args_>
+        struct identity_
+        {
+            static_assert(sizeof...(no_args_) == 0,
+                          "The identity function takes exactly one argument. ");
+
+            using type  =  Y;
+        };
+
+    public:
+
         template<typename... Y>
-        using function  =  identity< Y... >;
+        using function  =  typename identity_<Y...>::type;
 
         using subterms  = aml::subterms<T>;
     };

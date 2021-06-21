@@ -14,34 +14,32 @@ namespace aml
     {
     private:
 
-        struct check_emptyness_<typename... no_args>
+        template< typename T
+                , auto n_arguments
+                >
+        struct check_emptyness_
         {
-            static_assert( sizeof...(no_args) == 0,
+            static_assert( n_arguments == 0,
                            "Too many arguments in conditional!" );
 
-            template<typename X>
-            struct return_
-            {
-                using type  =  X;
-            };
+            using type = T;
         };
 
 
     public:
 
-        using sfinae = true;
-
-
         template< typename T >
         using enable = T;
+
+
+        using sfinae = enable<true_>;
 
 
         template< typename    T
                 , typename
                 , typename... no_args
                 >
-        using conditional  =  typename check_emptyness_<no_args...>::
-                              template return_<T>::type;
+        using conditional  =  typename check_emptyness_< T, sizeof...(no_args) >::type;
 
 
         static constexpr bool eval() { return true; };
@@ -53,18 +51,16 @@ namespace aml
     {
     private:
 
-        struct check_emptyness_<typename... no_args>
+       template< typename T
+               , auto n_arguments
+               >
+        struct check_emptyness_
         {
-            static_assert( sizeof...(no_args) == 0,
+            static_assert( n_arguments == 0,
                            "Too many arguments in conditional!" );
 
-            template<typename X>
-            struct return_
-            {
-                using type  =  X;
-            };
+            using type = T;
         };
-
 
     public:
 
@@ -72,16 +68,11 @@ namespace aml
                 , typename    F
                 , typename... no_args
                 >
-        using conditional  =  typename check_emptyness_<no_args...>::
-                              template return_<F>::type;
+        using conditional  =  typename check_emptyness_<F, sizeof...(no_args) >::type;
 
 
         static constexpr bool eval() { return false; };
     };
-
-
-    template< typename  X >
-    using as_bool = bool_< X::eval() >;
 
 
     template< typename    C
@@ -106,20 +97,44 @@ namespace aml
     using none  =  bool_< ( not_<Bool>::eval()  &&  ... ) >;
 
 
-    template<template<typename...> class... Predicate>
     struct predicates
     {
-        template<typename... X>
-        using for_all  =  all< Predicate<X>... >;
+    private:
+
+        template<typename X, typename... no_args>
+        struct identity_
+        {
+            static_assert(sizeof...(no_args) == 0);
+            using type = X;
+        };
 
 
-        template<typename... X>
-        using for_any  =  any< Predicate<X>... >;
+        template< typename... X >
+        using identity = typename identity_<X...>::type;
+
+    public:
+
+        template< template< typename... > class... Predicate >
+        struct all
+        {
+            template<typename... X>
+            using apply_to  =  bool_< (Predicate< identity< X... > >::eval() && ... ) >;
+        };
 
 
-        template<typename... X>
-        using for_none  =  none< Predicate<X>... >;
+        template< template< typename... > class... Predicate >
+        struct any
+        {
+            template<typename... X>
+            using apply_to  =  bool_< (Predicate< identity< X... > >::eval() || ... ) >;
+        };
+
+
+        template< template< typename... > class... Predicate >
+        struct none
+        {
+            template<typename... X>
+            using apply_to  = bool_< ! (Predicate< identity< X... > >::eval() || ... ) >;
+        };
     };
-
-
 }

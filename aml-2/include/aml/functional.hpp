@@ -1,7 +1,6 @@
 #pragma once
 
 #include "./logic.hpp"
-#include "./term_algebra.hpp"
 
 namespace aml
 {
@@ -91,6 +90,7 @@ namespace aml
     template<>
     struct composition<>
     {
+    private:
         template< typename X, typename... no_args >
         struct is_one_parameter
         {
@@ -100,109 +100,105 @@ namespace aml
             using type = X;
         };
 
+
+        template< typename X, auto n >
+        struct power_;
+
+
+        struct power_intermediate_
+        {
+            template<typename X, auto n>
+            using type = typename power_< typename X::type, n-1 >::type;
+        };
+
+
+        struct power_terminate_
+        {
+            template<typename X, auto >
+            using type  =  X;
+        };
+
+
+        template< typename X, auto n>
+        struct power_
+        {
+            using type  =  typename bool_< n!= 0 >::
+                           template conditional< power_intermediate_, power_terminate_ >::
+                           template type<X, n>;
+        };
+
+
+        template< typename >
+        struct limit_;
+
+
+        template<typename T>
+        struct seq_step
+        {
+            using type  =  typename limit_< typename T::type >::type;
+        };
+
+
+        template<typename T>
+        struct seq_terminate
+        {
+            using type  =  T;
+        };
+
+
+        template<typename X>
+        struct limit_
+        {
+            template< typename T
+                    , typename R = typename T::type
+                    >
+            static constexpr R next_step_( decltype(nullptr), decltype(nullptr) );
+
+
+            template< typename T >
+            static constexpr T next_step_( decltype(nullptr), ... );
+
+            template<typename>
+            static constexpr void term_id() { };
+
+            using continue_  =  bool_< term_id<decltype( next_step_<X>(nullptr, nullptr) )>  !=  term_id<X> >;
+            using type  =  typename continue_::template conditional< seq_step<X>, seq_terminate<X> >::type;
+        };
+
+
+    public:
+
         template<typename... X>
         using apply_to = typename is_one_parameter<X...>::type;
+
+        template<typename X, auto n>
+        using power  =  typename power_<X, n>::type;
+
+        template<typename... X>
+        using limit  =  typename limit_< typename is_one_parameter<X...>::type >::type;
     };
 
 
     template<typename... X>
     using identity  =  typename composition<>::template apply_to< X... >;
 
-    /*
-    template< auto n >
-    struct idx
-    {
-        static constexpr auto eval() { return n; }
-        using down =  idx< n-1 >;
-        using up   =  idx< n+1 >;
 
-        template< typename... T >
-        using power_of  =  typename down::power_of< T... >::type >
-    };
+    template< typename T, auto n >
+    using power = typename composition<>::template power< T, n >;
 
 
-    template<>
-    struct idx<0>
-    {
-        static constexpr auto eval() { return n; }
-        using down =  idx< -1 >;
-        using up   =  idx< +1 >;
-
-        template< typename... T >
-        using power_of  =  identity<T...>;
-    };
+    template< typename... T >
+    using limit  =  typename composition<>::template limit<T...>;
 
 
-    struct infinity
-    {
-    private:
+    template< typename X, typename... N>
+    using make_power  =  power< X, identity< N... >::eval()  >;
 
-        template<typename T, typename R = typename T::type>
-        static R get_type_(T*, T*);
-
-
-        template<typename T>
-        static T get_type_(T*, ... );
-
-
-        template<typename T>
-        struct hull
-        {
-            using type  =  hull< decltype( get_type_<T>(nullptr, nullptr) ) >;
-            using read  =  T;
-        };
-
-
-        template<typename>
-        struct step;
-
-
-        struct step_
-        {
-            template<typename X>
-            using type_for  =  compute_power<typename X::type>;
-        };
-
-
-        struct terminate
-        {
-            template<typename X>
-            using type_for
-            {
-                using type = typename T::read;
-            };
-        };
-
-
-        template<typename T>
-        struct compute_power
-        {
-            using choice  =  bool_<  id<T> == id<typename T::type>  >;
-
-            using type =  typename conditional< choice, terminate, step_ >::
-                          template type_for< X >::
-                          type;
-        }
-
-
-    public:
-
-        template<typename... T>
-        using power_of  =  typename compute_power< hull< identity<T...> > >::type;
-    };
-
-
-    // power<N, F> = F^N
-    template< typename... X >
-    using power  =  typename subterms< X... >::
-                    head::
-                    template power_of< typename subterms< X... >::tail::template apply<identity> >;
 
 
     template< template<typename... > class F >
     struct monoid
     {
-
         template< typename... X >
         struct action
         {
@@ -210,77 +206,20 @@ namespace aml
             using read  =  identity< X... >;
         };
 
-        template<typename... Idx>
-        using power = typename aml::power< identity<Idx...>, action<X...>  >::read;
-    };
+        template<auto n, typename... X>
+        using power = typename aml::power< action<X...>, n >::read;
 
-
-    template<typename... T>
-    struct hull
-    {
-        using type = identity<T...>;
-    };
-
-
-    template< typename... >
-    struct delay;
-
-    struct delay<>
-    {
-    private:
-
-        template< template<typename...> Evaluate_ >
-        using evaluate_subterm
+        template<auto n>
+        struct fix_exponent
         {
-            template<typename... X>
-            using apply_to  =  typename Evaluate_< identity<X...> >::type;
+            static constexpr auto eval() { return n; };
+
+            template< typename... X>
+            using power  =  typename monoid<F>::power<n, X...>;
         };
 
 
-        template<typename T>
-        struct evaluate_
-        {
-        private:
-            struct subevaluate_
-            {
-                using type =
-                    typename term<T>::
-                    subterms::
-                    template pointwise_apply<evaluate_subterm<T, evaluate_> >::
-                    template apply< typename term<T>::subterms::head::template apply_to >
-            };
-
-            struct remove_delay_
-            {
-                using terms = typename term<T>::subterms::tail;
-                using type  = typename terms::tail::template apply< terms::head::template apply_to >;
-            };
-
-        public:
-
-            using resolve_delay  =  bool_< term_id< typename term<T>::subterms::apply<delay> > == term_id< T > >;
-
-            using type           =  typename conditional< remove_delay, remove_delay_, subevaluate_ >::type;
-        };
-
-
-        template<typename T, typename Depth = idx<1>, tyepname... no_args>
-        struct evaluate_t
-        {
-            static_assert( sizeof...(no_args) == 0 );
-
-            using type  =  typename conditional< bool_< Depth::eval() == 0 >,
-                                                 T,
-                                                 power<Depth, evaluate_< identity<T...> > > >;
-        };
-
-    public:
-
-        template<typename... T>
-        using evaluate = typename evaluate_t< T... >::type;
+        template< typename... X >
+        using limit  =  typename limit< action<X...> >::read;
     };
-
-    template<typename... X>
-    using evaluate = typename delay<>::template evaluate< X... >;
-    */
 }

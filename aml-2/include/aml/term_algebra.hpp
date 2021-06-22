@@ -26,7 +26,7 @@ namespace aml
 
     template< typename    H
             , typename... T >
-    struct subterms< H, T... > 
+    struct subterms< H, T... >
     {
         using head  =  H;
         using tail  =  subterms< T... >;

@@ -102,7 +102,7 @@ namespace aml
         };
 
 
-        template< typename X, auto n >
+        template< typename X, auto... n >
         struct power_;
 
 
@@ -119,13 +119,17 @@ namespace aml
             using type  =  X;
         };
 
+        template<auto n, auto... >
+        static constexpr auto integer_head_() { return n; }
 
-        template< typename X, auto n>
+        template< typename X, auto... n>
         struct power_
         {
-            using type  =  typename bool_< n!= 0 >::
+            static constexpr auto n_ = integer_head_<n..., -1>();
+
+            using type  =  typename bool_< n_ != 0 >::
                            template conditional< power_intermediate_, power_terminate_ >::
-                           template type<X, n>;
+                           template type<X, n_>;
         };
 
 
@@ -166,14 +170,16 @@ namespace aml
             using type  =  typename continue_::template conditional< seq_step<X>, seq_terminate<X> >::type;
         };
 
-
     public:
 
         template<typename... X>
         using apply_to = typename is_one_parameter<X...>::type;
 
-        template<typename X, auto n>
-        using power  =  typename power_<X, n>::type;
+        template<typename X, auto... n>
+        using power  =  typename bool_< sizeof...(n) != 0 >::
+                        template conditional<  power_<X, n... > ,  limit_<X> >::
+                        type;
+
 
         template<typename... X>
         using limit  =  typename limit_< typename is_one_parameter<X...>::type >::type;
@@ -184,8 +190,8 @@ namespace aml
     using identity  =  typename composition<>::template apply_to< X... >;
 
 
-    template< typename T, auto n >
-    using power = typename composition<>::template power< T, n >;
+    template< typename T, auto... n >
+    using power = typename composition<>::template power< T, n... >;
 
 
     template< typename... T >
@@ -233,7 +239,7 @@ namespace aml
                 , typename... X
                 >
         using make_power  =  typename monoid< F::template apply_to >::
-            template power< N::eval(), X... >;
+                             template power< N::eval(), X... >;
     };
 
 }

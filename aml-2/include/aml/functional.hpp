@@ -2,6 +2,7 @@
 
 #include "./logic.hpp"
 
+
 namespace aml
 {
     template<  template< typename... > class F
@@ -195,31 +196,44 @@ namespace aml
     using make_power  =  power< X, identity< N... >::eval()  >;
 
 
+    template<  template< typename... > class...  >
+    struct monoid;
+
 
     template< template<typename... > class F >
-    struct monoid
+    struct monoid<F>
     {
         template< typename... X >
         struct action
         {
-            using type  =  action< F< X... > >;
-            using read  =  identity< X... >;
-        };
+            using type     =  action< F< X... > >;
 
-        template<auto n, typename... X>
-        using power = typename aml::power< action<X...>, n >::read;
-
-        template<auto n>
-        struct fix_exponent
-        {
-            static constexpr auto eval() { return n; };
-
-            template< typename... X>
-            using power  =  typename monoid<F>::power<n, X...>;
+            struct subterms
+            {
+                template< template<typename... > class G >
+                using apply =  G<X...>;
+            };
         };
 
 
-        template< typename... X >
-        using limit  =  typename limit< action<X...> >::read;
+        template< auto        n
+                , typename... X
+                >
+        using power  =  typename aml::power< action< X... >, n >::
+                        subterms::
+                        template apply< identity >;
     };
+
+
+    template<>
+    struct monoid<>
+    {
+        template< typename    F
+                , typename    N
+                , typename... X
+                >
+        using make_power  =  typename monoid< F::template apply_to >::
+            template power< N::eval(), X... >;
+    };
+
 }

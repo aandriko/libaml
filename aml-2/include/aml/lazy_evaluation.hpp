@@ -80,8 +80,6 @@ namespace aml
     };
 
 
-    void infinity() { }
-
     template< auto n >
     struct evaluation_depth
     {
@@ -119,10 +117,6 @@ namespace aml
     using evaluate  =  typename evaluation_depth< n >::template evaluate< X >;
 
 
-    struct infinity_t
-    {
-        static constexpr auto eval() { return infinity; };
-    };
 
     template<  typename X, typename N = infinity_t  >
     using evaluate_l  =  evaluate<X, N::eval() >;

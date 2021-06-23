@@ -73,13 +73,13 @@ namespace test::functional
         static_assert( std::is_same< cb3, f >::value );
 
 
-        using mc1  =  aml::make_currying< aml::curry<F> >::apply_to< t<1>, t<2>, t<3>, t<4>, t<5>, t<6> >;
+        using mc1  =  aml::currying_l< aml::curry<F> >::apply_to< t<1>, t<2>, t<3>, t<4>, t<5>, t<6> >;
 
-        using mc2  =  aml::make_currying< aml::curry<F>, number<2> >::
+        using mc2  =  aml::currying_l< aml::curry<F>, number<2> >::
                       apply_to< t<1>, t<2> >::
                       apply_to< t<3>, t<4>, t<5>, t<6> >;
 
-        using mc3  =  aml::make_currying< aml::curry<F>, number<2>, number<3> >::
+        using mc3  =  aml::currying_l< aml::curry<F>, number<2>, number<3> >::
                       apply_to< t<1>, t<2> >::
                       apply_to< t<3>, t<4>, t<5> >::
                       apply_to< t<6> >;
@@ -148,9 +148,9 @@ namespace test::functional
         struct n1 { static constexpr auto eval() {  return 1; } };
         struct n2 { static constexpr auto eval() {  return 2; } };
 
-        using make_t0  =  aml::make_power<T0, n0>;
-        using make_t1  =  aml::make_power<T0, n1>;
-        using make_t2  =  aml::make_power<T0, n2>;
+        using make_t0  =  aml::power_l<T0, n0>;
+        using make_t1  =  aml::power_l<T0, n1>;
+        using make_t2  =  aml::power_l<T0, n2>;
 
         static_assert( std::is_same<T0, make_t0>::value );
         static_assert( std::is_same<T0_t, make_t1>::value );
@@ -196,6 +196,12 @@ namespace test::functional
 
         static_assert( std::is_same<limit_1, limit_2>::value );
         static_assert( std::is_same<limit_1, has_type_forever::type >::value );
+
+        using power_1  =  aml::composition<>::power< has_type_forever, aml::infinity >;
+        using power_2  =  aml::power< has_type_forever, aml::infinity >;
+
+        static_assert( std::is_same<limit_1, power_1>::value );
+        static_assert( std::is_same<limit_2, power_2>::value );
     }
 
 
@@ -230,12 +236,12 @@ namespace test::functional
         using t1  =  aml::monoid<X>::power<1, int*, int**, int***, int****>;
         using t2  =  aml::monoid<X>::power<2, int*, int**, int***, int****>;
 
-        using s0  =  aml::monoid<>::make_power< function_<X>, n0, int**>;
+        using s0  =  aml::monoid<>::power_l< function_<X>, n0, int**>;
 
-        using s1  =  aml::monoid<>::make_power< function_<X>, n1,
+        using s1  =  aml::monoid<>::power_l< function_<X>, n1,
                                                  int*, int**, int***, int****>;
 
-        using s2  =  aml::monoid<>::make_power< function_<X>, n2,
+        using s2  =  aml::monoid<>::power_l< function_<X>, n2,
                                                  int*, int**, int***, int****>;
 
 

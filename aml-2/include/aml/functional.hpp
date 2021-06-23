@@ -5,6 +5,15 @@
 
 namespace aml
 {
+    void infinity() { }
+
+
+    struct infinity_t
+    {
+        static constexpr auto eval() { return infinity; };
+    };
+
+
     template<  template< typename... > class F
             ,  auto...  n
             >
@@ -35,11 +44,10 @@ namespace aml
     };
 
 
-    // This is curry<F, \infinity>:
     template<  template< typename... > class F  >
     struct curry<F>
     {
-        template<typename... X>
+        template< typename... X >
         using apply_to = F< X... >;
     };
 
@@ -62,8 +70,9 @@ namespace aml
             >
     using curry_and_bind  =  typename curry< F, sizeof...(X) >::template apply_to<X...>;
 
+
     template<typename F, typename... N>
-    using make_currying = curry< F::template apply_to, N::eval()... >;
+    using currying_l = curry< F::template apply_to, N::eval()... >;
 
 
     template< template<typename... > class... >
@@ -102,34 +111,31 @@ namespace aml
         };
 
 
-        template< typename X, auto... n >
+        template< typename X, auto >
         struct power_;
 
 
+        template<typename X, auto n>
         struct power_intermediate_
         {
-            template<typename X, auto n>
             using type = typename power_< typename X::type, n-1 >::type;
         };
 
 
+        template<typename X>
         struct power_terminate_
         {
-            template<typename X, auto >
             using type  =  X;
         };
 
-        template<auto n, auto... >
-        static constexpr auto integer_head_() { return n; }
 
-        template< typename X, auto... n>
+        template< typename X, auto n>
         struct power_
         {
-            static constexpr auto n_ = integer_head_<n..., -1>();
-
-            using type  =  typename bool_< n_ != 0 >::
-                           template conditional< power_intermediate_, power_terminate_ >::
-                           template type<X, n_>;
+            using type  =  typename bool_< n != 0 >::
+                           template conditional<    power_intermediate_<X, n> ,
+                                                    power_terminate_<X>    >::
+                           type;
         };
 
 
@@ -170,14 +176,35 @@ namespace aml
             using type  =  typename continue_::template conditional< seq_step<X>, seq_terminate<X> >::type;
         };
 
+        template< void (*n)() >
+        static constexpr bool is_finite_(decltype(nullptr), decltype(nullptr))
+        {
+            return false;
+        }
+
+        template< auto n >
+        static constexpr bool is_finite_(decltype(nullptr), ... )
+        {
+            return true;
+        }
+
+        template<auto n>
+        struct is_finite
+        {
+            static constexpr bool eval()
+            {
+                return is_finite_<n>(nullptr, nullptr);
+            }
+        };
+
     public:
 
         template<typename... X>
         using apply_to = typename is_one_parameter<X...>::type;
 
-        template<typename X, auto... n>
-        using power  =  typename bool_< sizeof...(n) != 0 >::
-                        template conditional<  power_<X, n... > ,  limit_<X> >::
+        template<typename X, auto n>
+        using power  =  typename bool_< is_finite<n>::eval() >::
+                        template conditional<  power_<X, n> ,  limit_<X> >::
                         type;
 
 
@@ -190,8 +217,8 @@ namespace aml
     using identity  =  typename composition<>::template apply_to< X... >;
 
 
-    template< typename T, auto... n >
-    using power = typename composition<>::template power< T, n... >;
+    template< typename T, auto n = infinity>
+    using power = typename composition<>::template power< T, n >;
 
 
     template< typename... T >
@@ -199,7 +226,7 @@ namespace aml
 
 
     template< typename X, typename... N>
-    using make_power  =  power< X, identity< N... >::eval()  >;
+    using power_l  =  power< X, identity< N... >::eval()  >;
 
 
     template<  template< typename... > class...  >
@@ -238,8 +265,8 @@ namespace aml
                 , typename    N
                 , typename... X
                 >
-        using make_power  =  typename monoid< F::template apply_to >::
-                             template power< N::eval(), X... >;
+        using power_l  =  typename monoid< F::template apply_to >::
+                          template power< N::eval(), X... >;
     };
 
 }

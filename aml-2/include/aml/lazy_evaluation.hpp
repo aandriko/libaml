@@ -1,7 +1,6 @@
 #pragma once
 
 #include "./logic.hpp"
-#include "./term_algebra.hpp"
 #include "./functional.hpp"
 
 
@@ -11,73 +10,84 @@ namespace aml
     struct hull
     {
         using type = identity<T...>;
+
+        static void id() {};
     };
 
 
-    template<  template< typename... > class  F
-            ,  auto                           delay
-            ,  typename...                    X
-            >
-    struct lazy_term;
+    template<auto n>
+    struct delay
+    {
+        static_assert( n != 0, "A delay must be strictly positive. " );
+    };
+
+
+    template<typename... >
+    struct lazy_l;
+
+
+    template< auto        n
+            , typename    F
+            , typename... X >
+    struct lazy_l<  delay< n >,  F,  X...  >
+    {
+        using type = lazy_l<  delay< n-1 >,  F,  typename lazy_l< X >::type...  >;
+    };
+
+
+    template< typename    F
+            , typename... X >
+    struct lazy_l<  delay< 1 >,  F,  X...  >
+    {
+        using type = typename F::template apply_to< typename lazy_l< X >::type... >;
+    };
+
+
+    template< auto        n
+            , typename    F
+            , typename... X >
+    struct lazy_l< lazy_l< delay< n >, F, X... > >
+    {
+        using type  =  typename lazy_l< delay<n>, F, X... >::type;
+    };
+
+
+    template< template<typename... > class F
+              , typename... X
+              >
+    struct lazy_l<  F< X... >  >
+    {
+        using type  =  F< typename lazy_l<X>::type... >;
+    };
 
 
     template< typename X >
-    struct contraction
+    struct lazy_l< X >
     {
-        using result  =  X;
-        using type    =  result;
+        using type  =  X;
     };
 
 
-    template<  template< typename... > class F
-            ,  typename... X
-               >
-    struct contraction< F< X... > >
-    {
-        using result  =  F< typename contraction<X>::result... >;
-        using type    =  contraction< result >;
-    };
-
-
-    template<  template< typename... > class F
-            ,  auto delay
-            ,  typename... X
+    template< typename X
+            , auto...  n
             >
-    struct contraction<  lazy_term< F, delay, X... >  >
-    {
-        uisng result  =  lazy_term<  F,
-                                     delay-1,
-                                     typename contraction<X>::type... >
-                                  >;
+    using evaluate  =  typename bool_<  hull< power<lazy_l<X>, n...> >::id
+                                        ==
+                                        hull< lazy_l<X > >::id  >::
+                       template conditional< X,
+                                             power<lazy_l<X>, n... > >;
 
-        using type    =  contraction< result >;
-    };
+
+    template<  typename X, typename... N  >
+    using evaluate_l  =  evaluate<X, N::eval()... >;
 
 
     template<  template< typename... > class F
-            ,  typename... X
+            ,  auto n = 1
             >
-    struct contraction<  lazy_term< F, 0, X... >  >
-    {
-        using result  =  F< typename contraction<X>::result... >;
-        using type    =  using contraction< result >;
-    };
-
-
-    template<  auto n
-            ,  template< tyepname... > class F  >
     struct lazy
     {
-        template<typename... X>
-        using apply_to  =  lazy_term< F, n, X... >;
+        template< typename... X >
+        using apply_to = lazy_l<  delay<n>, curry<F>, X...  >;
     };
-
-
-    template< typename X, auto... n >
-    using evaluation  =  typename power<contraction<X>, n...>::result;
-
-
-    template<typename X, typename... N>
-    using make_evaluation  =  evaluation< X, N::eval()... >;
-
 }

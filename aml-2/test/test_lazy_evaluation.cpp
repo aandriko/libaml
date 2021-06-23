@@ -2,10 +2,6 @@
 
 #include <type_traits>
 
-
-#include <iostream>
-#include <boost/core/demangle.hpp>
-
 namespace test::lazy
 {
     void test_hull()
@@ -81,9 +77,7 @@ namespace test::lazy
         using t15 = aml::evaluate< t3 >;
 
         static_assert( std::is_same< t14, t15 >::value );
-
-        std::cout << boost::core::demangle(typeid(t15).name() ) << std::endl;
-        //    static_assert( std::is_same< t14, f< int*, f< int**, int*** > > >::value );
+        static_assert( std::is_same< t14, f< int*, f< int**, int*** > > >::value );
     }
 }
 

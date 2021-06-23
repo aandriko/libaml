@@ -15,11 +15,23 @@ namespace aml
     };
 
 
-    template<auto n>
+    template< auto... n >
     struct delay
+    {
+        static_assert( sizeof...(n) == 1 );
+    };
+
+
+    template< auto n >
+    struct delay<n>
     {
         static_assert( n != 0, "A delay must be strictly positive. " );
     };
+
+
+    template<>
+    struct delay<>
+    { };
 
 
     template<typename... >
@@ -68,18 +80,52 @@ namespace aml
     };
 
 
+    void infinity() { }
+
+    template< auto n >
+    struct evaluation_depth
+    {
+        template< typename... X >
+        using evaluate  =  power< lazy_l<identity<X...>>, n >;
+    };
+
+
+    template<>
+    struct evaluation_depth<0>
+    {
+        template< typename... X >
+        using evaluate = identity< X... >;
+    };
+
+
+    template<>
+    struct evaluation_depth< infinity >
+    {
+        template<typename X>
+        struct action
+        {
+            using type = action< typename lazy_l<X>::type >;
+            using read = X;
+        };
+
+        template< typename... X>
+        using evaluate  =  typename limit< action<X...> >::read;
+    };
+
+
     template< typename X
-            , auto...  n
+            , auto n = infinity
             >
-    using evaluate  =  typename bool_<  hull< power<lazy_l<X>, n...> >::id
-                                        ==
-                                        hull< lazy_l<X > >::id  >::
-                       template conditional< X,
-                                             power<lazy_l<X>, n... > >;
+    using evaluate  =  typename evaluation_depth< n >::template evaluate< X >;
 
 
-    template<  typename X, typename... N  >
-    using evaluate_l  =  evaluate<X, N::eval()... >;
+    struct infinity_t
+    {
+        static constexpr auto eval() { return infinity; };
+    };
+
+    template<  typename X, typename N = infinity_t  >
+    using evaluate_l  =  evaluate<X, N::eval() >;
 
 
     template<  template< typename... > class F

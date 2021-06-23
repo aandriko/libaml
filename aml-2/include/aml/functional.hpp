@@ -17,7 +17,10 @@ namespace aml
     template<  template< typename... > class F
             ,  auto...  n
             >
-    struct curry;
+    struct curry
+    {
+        static_assert( sizeof...(n) != 0 );
+    };
 
 
     template< template< typename... > class F
@@ -45,10 +48,29 @@ namespace aml
 
 
     template<  template< typename... > class F  >
-    struct curry<F>
+    struct curry<F, infinity>
     {
+        //    private:
+        template<typename... X>
+        struct apply_to_
+        {
+        private:
+            template<typename... no_args>
+            struct nullary_function
+            {
+                static_assert( sizeof...(no_args) == 0 );
+                using type = F<X...>;
+            };
+
+        public:
+            template<typename... no_args>
+            using apply_to = typename nullary_function<no_args...>::type;
+        };
+
+    public:
+
         template< typename... X >
-        using apply_to = F< X... >;
+        using apply_to  =   apply_to_< X... >;
     };
 
 

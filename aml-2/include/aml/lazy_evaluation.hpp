@@ -128,6 +128,6 @@ namespace aml
     struct lazy
     {
         template< typename... X >
-        using apply_to = lazy_l<  delay<n>, curry<F>, X...  >;
+        using apply_to = lazy_l<  delay<n>, typename curry<F, 0>::template apply_to<>, X...  >;
     };
 }

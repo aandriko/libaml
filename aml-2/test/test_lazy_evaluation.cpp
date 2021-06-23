@@ -38,8 +38,8 @@ namespace test::lazy
         static_assert( std::is_same< t0, int >::value );
         static_assert( std::is_same< t1, int >::value );
 
-        using t3  =  aml::lazy_l< aml::delay<2>, aml::curry<f>, int*,
-                                  aml::lazy_l< aml::delay<1>, aml::curry<f>, int**, int*** > >;
+        using t3  =  aml::lazy_l< aml::delay<2>, aml::curry<f, 0>::apply_to<>, int*,
+                                  aml::lazy_l< aml::delay<1>, aml::curry<f, 0>::apply_to<>, int**, int*** > >;
 
         using t4  =  aml::lazy< f, 2 >::
                      apply_to<    int*,  aml::lazy<f>::apply_to<int**, int***>    >;
@@ -52,7 +52,7 @@ namespace test::lazy
         static_assert( std::is_same<t5, t3>::value );
         static_assert( std::is_same<t5, t6>::value );
 
-        using t7  =  aml::lazy_l< aml::delay<1>, aml::curry<f>, int*, f<int**, int*** > >;
+        using t7  =  aml::lazy_l< aml::delay<1>, aml::curry<f, 0>::apply_to<>, int*, f<int**, int*** > >;
         using t8  =  aml::lazy<f>::apply_to< int*, f< int**, int*** > >;
 
         static_assert( std::is_same< t7, t8 >::value );

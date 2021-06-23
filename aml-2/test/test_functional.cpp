@@ -28,6 +28,15 @@ namespace test::functional
 
     using f  =  F< t<1>, t<2>, t<3>, t<4>, t<5>, t<6> >;
 
+
+    template<template<typename...> class F>
+    struct bound_function_
+    {
+        template< typename... X >
+        using apply_to = F< X... >;
+    };
+
+
     template< auto n >
     struct number { static constexpr auto eval() { return n; } };
 
@@ -53,7 +62,7 @@ namespace test::functional
 
         static_assert( std::is_same< c2, f >::value );
 
-        using c3  =  aml::curry<F>::apply_to< t<1>, t<2>, t<3>, t<4>, t<5>, t<6> >;
+        using c3  =  aml::curry<F, aml::infinity>::apply_to< t<1>, t<2>, t<3>, t<4>, t<5>, t<6> >::apply_to<>;
 
         static_assert( std::is_same< c3, f >::value );
 
@@ -73,13 +82,13 @@ namespace test::functional
         static_assert( std::is_same< cb3, f >::value );
 
 
-        using mc1  =  aml::currying_l< aml::curry<F> >::apply_to< t<1>, t<2>, t<3>, t<4>, t<5>, t<6> >;
+        using mc1  =  aml::currying_l< bound_function_<F>, number<0> >::apply_to<>::apply_to< t<1>, t<2>, t<3>, t<4>, t<5>, t<6> >;
 
-        using mc2  =  aml::currying_l< aml::curry<F>, number<2> >::
+        using mc2  =  aml::currying_l< bound_function_<F>, number<2> >::
                       apply_to< t<1>, t<2> >::
                       apply_to< t<3>, t<4>, t<5>, t<6> >;
 
-        using mc3  =  aml::currying_l< aml::curry<F>, number<2>, number<3> >::
+        using mc3  =  aml::currying_l< bound_function_<F>, number<2>, number<3> >::
                       apply_to< t<1>, t<2> >::
                       apply_to< t<3>, t<4>, t<5> >::
                       apply_to< t<6> >;

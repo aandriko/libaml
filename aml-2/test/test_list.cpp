@@ -33,8 +33,7 @@ namespace test::list
         static_assert( std::is_same< aml::list_tail<t3>, aml::list<int**, int***> >::value);
         static_assert( std::is_same< aml::list_init<t3>, aml::list<int*, int**> >::value );
         //        static_assert( std::is_same< aml::list_last<t3>, int*** >::value );
-        
-        
+
 
         //        static_assert( std::is_same< t3::drop<0>, t3 >::value );
         //        static_assert( std::is_same< t3::drop<1>, aml::list<int**, int***> >::value );

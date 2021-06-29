@@ -63,7 +63,8 @@ int main()
 {
     void (*test_set[])() =
     {
-        test::object::test_object
+        test::object::test_object,
+        test::object::test_number
     };
 
 

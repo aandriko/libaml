@@ -1,19 +1,10 @@
 #pragma once
 
 #include "./logic.hpp"
-
+#include "./object.hpp"
 
 namespace aml
 {
-    void infinity() { }
-
-
-    struct infinity_t
-    {
-        static constexpr auto eval() { return infinity; };
-    };
-
-
     template<  template< typename... > class F
             ,  auto...  n
             >
@@ -198,36 +189,18 @@ namespace aml
             using type  =  typename continue_::template conditional< seq_step<X>, seq_terminate<X> >::type;
         };
 
-        template< void (*n)() >
-        static constexpr bool is_finite_(decltype(nullptr), decltype(nullptr))
-        {
-            return false;
-        }
-
-        template< auto n >
-        static constexpr bool is_finite_(decltype(nullptr), ... )
-        {
-            return true;
-        }
-
-        template<auto n>
-        struct is_finite
-        {
-            static constexpr bool eval()
-            {
-                return is_finite_<n>(nullptr, nullptr);
-            }
-        };
 
     public:
 
         template<typename... X>
         using apply_to = typename is_one_parameter<X...>::type;
 
+
         template<typename X, auto n>
-        using power  =  typename bool_< is_finite<n>::eval() >::
+        using power  =  typename bool_< num<n>::eval() != num<n>::down::eval()  >::
                         template conditional<  power_<X, n> ,  limit_<X> >::
                         type;
+
 
 
         template<typename... X>
@@ -239,7 +212,7 @@ namespace aml
     using identity  =  typename composition<>::template apply_to< X... >;
 
 
-    template< typename T, auto n = infinity>
+    template< typename T, auto n /*= infinity*/ >
     using power = typename composition<>::template power< T, n >;
 
 

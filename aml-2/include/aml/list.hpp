@@ -51,27 +51,27 @@ namespace aml
     template< typename N, typename... X>
     using at_l = at< N::eval(), X... >;
 
- 
+
     template< typename    List
             , typename... no_args
             >
-    using list_head  =  typename bool_< sizeof...(no_args) == 0 >::
-                        template enable< typename List::head >;
+    using list_head  = typename identity<List, no_args...>::head;
 
 
     template< typename    List
             , typename... no_args
             >
-    using list_tail  =  typename bool_< sizeof...(no_args) == 0 >::
-                        template enable< typename List::tail >;
+    using list_tail  =  typename identity<List, no_args...>::tail;
 
 
     template< typename List, typename... no_args >
     using list_last  =  typename identity<List, no_args...>::last;
 
 
-    template< typename List, typename... no_args >
-    using list_init  =  typename identity<List, no_args...>::init;
+    template< typename List
+            , typename... no_args
+            >
+    using list_init  =  typename identity< List, no_args... >::init;
 
 
     template< typename... >
@@ -278,7 +278,10 @@ namespace aml
 
 
         template< auto n >
-        using take  = typename reverse::template drop< size() - n>::reverse;
+        using take  =  typename monoid<list_tail>::
+                       template power< size() - n, reverse >::
+                       template apply<list>::
+                       reverse;
 
 
         template<typename... Y>
@@ -364,7 +367,9 @@ namespace aml
             using apply = G< rejected, accepted >;
         };
 
+
     private:
+
         template<typename X, int n>
         struct numbered
         {
@@ -407,7 +412,7 @@ namespace aml
         };
 
     public:
-
+        /*
         template< template<typename...> class Less
                 >
         using sort_with  =  typename list< H, T... >::
@@ -424,7 +429,7 @@ namespace aml
 
         template< template<typename...> class Pred>
         using drop_while = typename split_by_first_occurence_of< predicates::none<Pred>::template apply_to >::accepted;
-
+        */
     };
 
     template<typename... List>

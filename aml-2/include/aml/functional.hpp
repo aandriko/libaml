@@ -192,7 +192,7 @@ namespace aml
             static constexpr T next_step_( decltype(nullptr), ... );
 
             template<typename>
-            static constexpr void term_id() { };
+            static constexpr void term_id() { }
 
             using continue_  =  bool_< term_id<decltype( next_step_<X>(nullptr, nullptr) )>  !=  term_id<X> >;
             using type  =  typename continue_::template conditional< seq_step<X>, seq_terminate<X> >::type;

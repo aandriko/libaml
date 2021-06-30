@@ -75,9 +75,51 @@ namespace aml
         using subterms  =  aml::subterms< X... >;
     };
 
-    // compile-time test if two types (X, Y) are equal/unequal:
-    // type_id<X> == type_id<Y> / type_id<X> != type_id<Y>
-    template< typename T >
-    inline void term_id() {};
+
+    template< typename... X >
+    struct is_same;
+
+
+    template<>
+    struct is_same<>
+    {
+        static constexpr bool eval() { return true; }
+    };
+
+
+    template< typename X >
+    struct is_same<X>
+    {
+        static constexpr bool eval() { return true; }
+    };
+
+
+    template< typename    X
+            , typename    Not_X
+            , typename... Z
+            >
+    struct is_same< X, Not_X, Z... >
+    {
+    public:
+
+        static constexpr bool eval()
+        {
+            return false;
+        }
+    };
+
+
+    template< typename    X
+            , typename... Z
+            >
+    struct is_same< X, X, Z... >
+    {
+    public:
+
+        static constexpr bool eval()
+        {
+            return is_same<X, Z...>::eval();
+        }
+    };
 
 }

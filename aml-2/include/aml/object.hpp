@@ -46,19 +46,15 @@ namespace aml
         static constexpr auto eval() { return n; }
     };
 
-
-    constexpr auto infinity = nullptr;
-
-    using infinity_t  =  num< infinity >;
-
-    template<>
-    struct num< infinity >
+    struct infinity
     {
-        using up    =  infinity_t;
-        using down  =  infinity_t;
+        using up    =  infinity;
+        using down  =  infinity;
 
-        static constexpr auto eval() { return infinity; }
+        constexpr infinity() = default;
+        static constexpr infinity eval() { return infinity(); }
     };
 
-
+    template<auto x>
+    using _ = num<x>;
 }

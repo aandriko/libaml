@@ -43,11 +43,13 @@ namespace test::term_algebra
         static_assert( std::is_same< aml::subterms<int, int*>::tail, aml::subterms<int*> >::value );
     }
 
-
-    void test_term_id()
+    void test_is_same()
     {
-        static_assert( aml::term_id<int*> == aml::term_id<int*> );
-        static_assert( aml::term_id<int*> != aml::term_id<void> );
+        static_assert( aml::is_same<>::eval() );
+        static_assert( aml::is_same<int*>::eval() );
+        static_assert( aml::is_same<int*, int*>::eval() );
+        static_assert( aml::is_same<int*, int*, int*>::eval() );
+        static_assert( aml::is_same<int*, int*, int**>::eval() == false);
     }
 
 
@@ -65,7 +67,7 @@ int main()
     void (*test_set[])() =
     {
         test::term_algebra::test_term,
-        test::term_algebra::test_term_id
+        test::term_algebra::test_is_same
     };
 
 

@@ -32,16 +32,9 @@ namespace test::object
 
     void test_number()
     {
-        static_assert( std::is_same< aml::num<aml::infinity>,
-                       aml::num<aml::infinity>::down>::value );
+        static_assert( std::is_same< aml::infinity, aml::infinity::down>::value );
 
-        static_assert( std::is_same< aml::num<aml::infinity>,
-                       aml::num<aml::infinity>::up>::value );
-
-        static_assert( std::is_same<aml::infinity_t,
-                       aml::num<aml::infinity> >::value );
-
-        static_assert( aml::infinity_t::eval() == aml::infinity );
+        static_assert( std::is_same< aml::infinity, aml::infinity::up>::value );
 
         static_assert( aml::num<3>::eval() == 3 );
 

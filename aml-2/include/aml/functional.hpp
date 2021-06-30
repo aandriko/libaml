@@ -2,29 +2,30 @@
 
 #include "./logic.hpp"
 #include "./object.hpp"
+#include "./term_algebra.hpp"
 
 namespace aml
 {
     template<  template< typename... > class F
-            ,  auto...  n
+            ,  typename... N
             >
     struct curry
     {
-        static_assert( sizeof...(n) != 0 );
+        static_assert( sizeof...(N) != 0 );
     };
 
 
     template< template< typename... > class F
-            , auto n
+            , typename N
             >
-    struct curry< F, n >
+    struct curry< F, N >
     {
     private:
 
         template< typename... X >
         struct bind_args
         {
-            static_assert( sizeof...(X) == n,
+            static_assert( sizeof...(X) == N::eval(),
                            "The number of input arguments for curried function is incorrect." );
 
             template<typename... Y>
@@ -66,26 +67,22 @@ namespace aml
 
 
     template< template<typename...> class F
-            , auto    n
-            , auto... m
+            , typename                    N
+            , typename...                 M
             >
-    struct curry< F, n, m... >
+    struct curry< F, N, M... >
     {
         template< typename... X >
-        using apply_to  =  curry<    curry<F, n>::
+        using apply_to  =  curry<    curry<F, N>::
                                      template apply_to<X...>::
-                                     template apply_to,          m...    >;
+                                     template apply_to, M... >;
     };
 
 
     template< template<typename...> class F
             , typename... X
             >
-    using curry_and_bind  =  typename curry< F, sizeof...(X) >::template apply_to<X...>;
-
-
-    template<typename F, typename... N>
-    using currying_l = curry< F::template apply_to, N::eval()... >;
+    using curry_and_bind  =  typename curry< F, num<sizeof...(X)> >::template apply_to<X...>;
 
 
     template< template<typename... > class... >
@@ -124,14 +121,14 @@ namespace aml
         };
 
 
-        template< typename X, auto >
+        template< typename X, typename >
         struct power_;
 
 
-        template<typename X, auto n>
+        template<typename X, typename N>
         struct power_intermediate_
         {
-            using type = typename power_< typename X::type, n-1 >::type;
+            using type = typename power_< typename X::type, typename N::down >::type;
         };
 
 
@@ -142,11 +139,11 @@ namespace aml
         };
 
 
-        template< typename X, auto n>
+        template< typename X,  typename N>
         struct power_
         {
-            using type  =  typename bool_< n != 0 >::
-                           template conditional<    power_intermediate_<X, n> ,
+            using type  =  typename bool_< N::eval() != 0 >::
+                           template conditional<    power_intermediate_<X, N> ,
                                                     power_terminate_<X>    >::
                            type;
         };
@@ -182,10 +179,9 @@ namespace aml
             template< typename T >
             static constexpr T next_step_( decltype(nullptr), ... );
 
-            template<typename>
-            static constexpr void term_id() { }
 
-            using continue_  =  bool_< term_id<decltype( next_step_<X>(nullptr, nullptr) )>  !=  term_id<X> >;
+            using continue_  = bool_< ! is_same< decltype(next_step_<X>(nullptr, nullptr)), X >::eval() >;
+
             using type  =  typename continue_::template conditional< seq_step<X>, seq_terminate<X> >::type;
         };
 
@@ -196,11 +192,10 @@ namespace aml
         using apply_to = typename is_one_parameter<X...>::type;
 
 
-        template<typename X, auto n>
-        using power  =  typename bool_< num<n>::eval() != num<n>::down::eval()  >::
-                        template conditional<  power_<X, n> ,  limit_<X> >::
-                        type;
-
+        template<typename X, typename... N>
+        using power  =  typename conditional< is_same<infinity, typename is_one_parameter<N...>::type >,
+                                              limit_<X>,
+                                              power_<X, typename is_one_parameter<N... >::type > >::type;
 
 
         template<typename... X>
@@ -212,24 +207,16 @@ namespace aml
     using identity  =  typename composition<>::template apply_to< X... >;
 
 
-    template< typename T, auto n /*= infinity*/ >
-    using power = typename composition<>::template power< T, n >;
+    template< typename T, typename... N >
+    using power = typename composition<>::template power< T, identity<N...> >;
 
 
     template< typename... T >
     using limit  =  typename composition<>::template limit<T...>;
 
 
-    template< typename X, typename... N>
-    using power_l  =  power< X, identity< N... >::eval()  >;
-
-
-    template<  template< typename... > class...  >
-    struct monoid;
-
-
     template< template<typename... > class F >
-    struct monoid<F>
+    struct monoid
     {
         template< typename... X >
         struct action
@@ -244,24 +231,17 @@ namespace aml
         };
 
 
-        template< auto        n
-                , typename... X
-                >
-        using power  =  typename aml::power< action< X... >, n >::
-                        subterms::
-                        template apply< identity >;
+        template<typename... N>
+        struct power
+        {
+            static_assert(sizeof...(N) == 1);
+
+            template< typename... X >
+            using apply_to  =  typename aml::power< action< X... >, identity<N... > >::
+                               subterms::
+                               template apply< identity >;
+        };
     };
 
-
-    template<>
-    struct monoid<>
-    {
-        template< typename    F
-                , typename    N
-                , typename... X
-                >
-        using power_l  =  typename monoid< F::template apply_to >::
-                          template power< N::eval(), X... >;
-    };
 
 }

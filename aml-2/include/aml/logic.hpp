@@ -75,10 +75,10 @@ namespace aml
     };
 
 
-    template< typename    C
+    template< typename    Condition
             , typename... X
             >
-    using conditional  =  typename C::template conditional<X...>;
+    using conditional  =  typename bool_<Condition::eval()>::template conditional<X...>;
 
 
     template<typename Bool, typename... no_args>

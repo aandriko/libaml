@@ -37,17 +37,18 @@ namespace test::functional
     };
 
 
-    template< auto n >
-    struct number { static constexpr auto eval() { return n; } };
+    //    template< auto n >
+    //  struct number { static constexpr auto eval() { return n; } };
 
     void test_curry()
     {
-        using c0  =  aml::curry<F, 2>::apply_to<t<1>, t<2> >::
-                                       apply_to<t<3>, t<4>, t<5>, t<6> >;
+        using aml::_;
+
+        using c0  =  aml::curry<F, _<2> >::apply_to<t<1>, t<2> >::apply_to<t<3>, t<4>, t<5>, t<6> >;
 
         static_assert( std::is_same< c0, f >::value );
 
-        using c1  =  aml::curry< F, 1, 3, 2 >::
+        using c1  =  aml::curry< F, _<1>, _<3>, _<2> >::
             apply_to<  t<1>  >::
             template apply_to<  t<2>, t<3>, t<4>  >::
             template apply_to<  t<5>, t<6>  >::
@@ -55,7 +56,7 @@ namespace test::functional
 
         static_assert( std::is_same< c1, f >::value );
 
-        using c2  =  aml::curry<F, 3, 1>::
+        using c2  =  aml::curry<F, _<3>, _<1> >::
                      apply_to< t<1>, t<2>, t<3> >::
                      apply_to< t<4> >::
                      apply_to< t<5>, t<6> >;
@@ -67,35 +68,16 @@ namespace test::functional
         static_assert( std::is_same< c3, f >::value );
 
 
-        using cb1  =  aml::curry_and_bind<F, t<1>, t<2> >::
-                      apply_to<t<3>, t<4>, t<5>, t<6> >;
+        using cb1  =  aml::curry_and_bind<F, t<1>, t<2> >::apply_to<t<3>, t<4>, t<5>, t<6> >;
 
-        using cb2  =  aml::curry_and_bind<F>::
-                      apply_to< t<1>, t<2>, t<3>, t<4>, t<5>, t<6> >;
+        using cb2  =  aml::curry_and_bind<F>::apply_to< t<1>, t<2>, t<3>, t<4>, t<5>, t<6> >;
 
-        using cb3  =  aml::curry_and_bind<F, t<1>, t<2>, t<3>, t<4>, t<5>, t<6> >::
-                      apply_to<>;
+        using cb3  =  aml::curry_and_bind<F, t<1>, t<2>, t<3>, t<4>, t<5>, t<6> >::apply_to<>;
 
 
         static_assert( std::is_same< cb1, f >::value );
         static_assert( std::is_same< cb2, f >::value );
         static_assert( std::is_same< cb3, f >::value );
-
-
-        using mc1  =  aml::currying_l< bound_function_<F>, number<0> >::apply_to<>::apply_to< t<1>, t<2>, t<3>, t<4>, t<5>, t<6> >;
-
-        using mc2  =  aml::currying_l< bound_function_<F>, number<2> >::
-                      apply_to< t<1>, t<2> >::
-                      apply_to< t<3>, t<4>, t<5>, t<6> >;
-
-        using mc3  =  aml::currying_l< bound_function_<F>, number<2>, number<3> >::
-                      apply_to< t<1>, t<2> >::
-                      apply_to< t<3>, t<4>, t<5> >::
-                      apply_to< t<6> >;
-
-        static_assert( std::is_same< mc1, f >::value );
-        static_assert( std::is_same< mc2, f >::value );
-        static_assert( std::is_same< mc3, f >::value );
     }
 
 
@@ -106,6 +88,8 @@ namespace test::functional
 
     void test_composition()
     {
+        using aml::_;
+
         using t1  =  K_<H_<G_<int, void, char> > >;
         using c1  =  aml::composition<K_, H_, G_>::apply_to<int, void, char>;
         using c2  =  aml::composition< aml::composition<K_, H_>::apply_to, G_>::apply_to<int, void, char>;
@@ -133,37 +117,29 @@ namespace test::functional
         };
 
 
-        using T0_ = aml::composition<>::power<T0, 0>;
+        using T0_ = aml::composition<>::power<T0, _<0> >;
 
         static_assert( std::is_same< T0_, T0 >::value );
-        static_assert( std::is_same<T0, aml::power<T0, 0>>::value );
+        static_assert( std::is_same<T0, aml::power<T0, _<0> >>::value );
 
 
-        using T0_t  =  aml::composition<>::power< T0, 1 >;
+        using T0_t  =  aml::composition<>::power< T0, _<1> >;
 
 
         static_assert( std::is_same< T0_t, typename T0::type >::value );
-        static_assert( std::is_same< T0_t, aml::power<T0, 1> >::value );
+        static_assert( std::is_same< T0_t, aml::power<T0, _<1> > >::value );
 
 
-        using T0_tt  =  aml::composition<>::power<T0, 2>;
+        using T0_tt  =  aml::composition<>::power<T0, _<2> >;
 
 
         static_assert( std::is_same< T0_tt, T0::type::type >::value );
-        static_assert( std::is_same< T0_tt, aml::power<T0, 2> >::value );
+        static_assert( std::is_same< T0_tt, aml::power<T0, _<2> > >::value );
 
 
         struct n0 { static constexpr auto eval() {  return 0; } };
         struct n1 { static constexpr auto eval() {  return 1; } };
         struct n2 { static constexpr auto eval() {  return 2; } };
-
-        using make_t0  =  aml::power_l<T0, n0>;
-        using make_t1  =  aml::power_l<T0, n1>;
-        using make_t2  =  aml::power_l<T0, n2>;
-
-        static_assert( std::is_same<T0, make_t0>::value );
-        static_assert( std::is_same<T0_t, make_t1>::value );
-        static_assert( std::is_same<T0_tt, make_t2>::value );
     }
 
     void test_limit()
@@ -237,32 +213,17 @@ namespace test::functional
 
     void test_monoid()
     {
-        struct n0 { static constexpr auto eval() { return 0; } };
-        struct n1 { static constexpr auto eval() { return 1; } };
-        struct n2 { static constexpr auto eval() { return 2; } };
+        using aml::_;
 
-        using t0  =  aml::monoid<X>::power<0, int**>;
-        using t1  =  aml::monoid<X>::power<1, int*, int**, int***, int****>;
-        using t2  =  aml::monoid<X>::power<2, int*, int**, int***, int****>;
-
-        using s0  =  aml::monoid<>::power_l< function_<X>, n0, int**>;
-
-        using s1  =  aml::monoid<>::power_l< function_<X>, n1,
-                                                 int*, int**, int***, int****>;
-
-        using s2  =  aml::monoid<>::power_l< function_<X>, n2,
-                                                 int*, int**, int***, int****>;
+        using t0  =  aml::monoid<X>::power<_<0> >::apply_to< int** >;
+        using t1  =  aml::monoid<X>::power< _<1> >::apply_to<int*, int**, int***, int****>;
+        using t2  =  aml::monoid<X>::power< _<2> >::apply_to<int*, int**, int***, int****>;
 
 
         static_assert( std::is_same< t0, int** >::value );
         static_assert( std::is_same< t1, X< int*, int**, int***, int**** > >::value );
         static_assert( std::is_same< t2, X< X< int*, int**, int***, int**** > > >::value );
-
-        static_assert(std::is_same< t0, s0 >::value );
-        static_assert(std::is_same< t1, s1 >::value );
-        static_assert(std::is_same< t2, s2 >::value );
     }
-
 }
 
 

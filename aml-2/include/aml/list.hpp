@@ -48,8 +48,9 @@ namespace aml
     using at  =  typename power< typename head_and_tail<X...>::tail, n >::return_::template apply<head>;
 
 
-    template< typename N, typename... X>
-    using at_l = at< N::eval(), X... >;
+ template< typename N, typename... X>
+/    using at_l = at< N::eval(), X... >;
+
 
 
     template< typename    List
@@ -81,6 +82,9 @@ namespace aml
     template<>
     struct list<>
     {
+        using head  =  list<>;  // useful definitions for monoid<list_head> and monoid<list_tail>
+        using tail  =  list<>;  // (meta-ducktyping).
+
         static constexpr auto size() { return 0; }
 
         template< typename... X >

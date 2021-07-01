@@ -82,7 +82,7 @@ namespace aml
         //        using tail  =  list<>;  // (meta-ducktyping).
         using tail = decltype(nullptr); // problematic hack, has to go later
 
-        
+
         static constexpr auto size() { return 0; }
 
         template< typename... X >
@@ -395,28 +395,21 @@ namespace aml
 
     private:
 
-        template<typename X, int n>
-        struct numbered
-        {
-            static constexpr int eval() { return n; }
-            using type  = X;
-        };
-
 
         template<typename Numbered>
-        using remove_numbering = typename Numbered::type;
+        using remove_numbering = typename Numbered::head;
 
 
         template<typename List, typename X>
-        using add_numbered = typename List::template rcons< numbered<X, List::size() > >;
+        using add_with_index = typename List::template rcons< list<X, num<List::size()> > >;
 
         template<template<typename...> class Less>
         struct stable_less
         {
             template< typename X, typename Y>
-            using apply_to = bool_<  Less<X, Y>::eval() || ( Less<X, Y>::eval() == false &&
-                                                             Less<Y, X>::eval() == false &&
-                                                             X::eval() < Y::eval )  >;
+            using apply_to = bool_< Less< typename X::head, typename Y::head >::eval()  ||
+                                    (    Less< typename Y::head, typename X::head >::eval() == false &&
+                                         X::tail::head::eval() <  Y::tail::head::eval()    ) >;
         };
 
         template<typename...> friend struct list;
@@ -437,16 +430,16 @@ namespace aml
         };
 
     public:
-        /*
         template< template<typename...> class Less
                 >
         using sort_with  =  typename list< H, T... >::
-                            template lfold_with< add_numbered, list<> >::
-                            template sort_with_<  stable_less< Less >::template apply_to  >::type::
-                            template pointwise_apply< remove_numbering >;
+            template lfold_with< add_with_index, list<> >::
+            template sort_with_<  stable_less< Less >::template apply_to  >::
+            type;
+            //              template pointwise_apply< remove_numbering >;
+        
 
-
-
+        /*
 
         template< template<typename...> class Pred>
         using take_while = typename split_by_first_occurence_of< predicates::none<Pred>::template apply_to >::rejected;

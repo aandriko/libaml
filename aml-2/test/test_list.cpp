@@ -378,10 +378,22 @@ namespace test::list
         using macr_3  =  aml::list< _<1>, _<2>, _<3>  >::map_accum_right_with< multiply, _<1> >;
 
         static_assert( std::is_same<macr_3, aml::list< _<6>, aml::list<_<-3>, _<-2>, _<-1> >  > >::value );
+    }
 
+    template< typename X, typename Y >
+    using less = aml::bool_< (X::eval() < Y::eval()) >;
+
+    void test_sort()
+    {
+        using aml::_;
+
+        using unsorted_5 = aml::list< _<3>, _<2>, _<1>, _<4>, _<0> >;
+
+        unsorted_5::sort_with<less> sorted;
+
+        std::cout << boost::core::demangle( typeid(sorted).name() ) << std::endl;
     }
 }
-
 
 
 
@@ -405,6 +417,7 @@ int main()
         test::list::test_scan_right,
         test::list::test_map_accum_left,
         test::list::test_map_accum_right,
+        test::list::test_sort,
     };
 
 

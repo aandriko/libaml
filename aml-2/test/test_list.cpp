@@ -324,6 +324,62 @@ namespace test::list
 
     }
 
+    template<typename B, typename A>
+    using multiply = aml::list< aml::num< B::eval() * A::eval() >, aml::num< -A::eval() > >;
+
+    void test_map_accum_left()
+    {
+
+        using aml::_;
+
+
+        using macl_0  =  aml::list<>::map_accum_left_with<multiply, _<1> >;
+
+        static_assert( std::is_same<macl_0, aml::list< _<1>, aml::list<>  > >::value );
+
+
+        using macl_1  =  aml::list< _<1> >::map_accum_left_with< multiply, _<1> >;
+
+        static_assert( std::is_same<macl_1, aml::list< _<1>, aml::list<_<-1> >  > >::value );
+
+
+        using macl_2  =  aml::list< _<1>, _<2> >::map_accum_left_with< multiply, _<1> >;
+
+        static_assert( std::is_same<macl_2, aml::list< _<2>, aml::list<_<-1>, _<-2> >  > >::value );
+
+
+        using macl_3  =  aml::list< _<1>, _<2>, _<3>  >::map_accum_left_with< multiply, _<1> >;
+
+        static_assert( std::is_same<macl_3, aml::list< _<6>, aml::list<_<-1>, _<-2>, _<-3> >  > >::value );
+    }
+
+
+    void test_map_accum_right()
+    {
+
+        using aml::_;
+
+
+        using macr_0  =  aml::list<>::map_accum_right_with<multiply, _<1> >;
+
+        static_assert( std::is_same<macr_0, aml::list< _<1>, aml::list<>  > >::value );
+
+
+        using macr_1  =  aml::list< _<1> >::map_accum_right_with< multiply, _<1> >;
+
+        static_assert( std::is_same<macr_1, aml::list< _<1>, aml::list<_<-1> >  > >::value );
+
+
+        using macr_2  =  aml::list< _<1>, _<2> >::map_accum_right_with< multiply, _<1> >;
+
+        static_assert( std::is_same<macr_2, aml::list< _<2>, aml::list<_<-2>, _<-1> >  > >::value );
+
+
+        using macr_3  =  aml::list< _<1>, _<2>, _<3>  >::map_accum_right_with< multiply, _<1> >;
+
+        static_assert( std::is_same<macr_3, aml::list< _<6>, aml::list<_<-3>, _<-2>, _<-1> >  > >::value );
+
+    }
 }
 
 
@@ -347,6 +403,8 @@ int main()
         test::list::test_fold_right,
         test::list::test_scan_left,
         test::list::test_scan_right,
+        test::list::test_map_accum_left,
+        test::list::test_map_accum_right,
     };
 
 

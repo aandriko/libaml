@@ -78,16 +78,20 @@ namespace aml
     template<>
     struct list<>
     {
-        using head  =  list<>;  // useful definitions for monoid<list_head> and monoid<list_tail>
-        using tail  =  list<>;  // (meta-ducktyping).
+        //        using head  =  list<>;  // useful definitions for monoid<list_head> and monoid<list_tail>
+        //        using tail  =  list<>;  // (meta-ducktyping).
+        using tail = decltype(nullptr); // problematic hack, has to go later
 
+        
         static constexpr auto size() { return 0; }
 
         template< typename... X >
         using cons  =  list< X... >;
 
+
         template< typename... X >
         using rcons  =  list< X... >;
+
 
         using reverse  =  list<>;
 
@@ -127,7 +131,7 @@ namespace aml
         template< template< typename...> class
                 , typename b
                 >
-        using map_accum_left_with  =  list<b, list<>>;
+        using map_accum_left_with  =  list<b, list<> >;
 
 
         template< template< typename...> class
@@ -252,25 +256,49 @@ namespace aml
                              template rcons<  F< typename init::template lscan_with<F, Z>::last, last >  >;
 
 
-        // maccL: [ B x A --F--> B x C ] x B --> [A] --> B x [C]
-        template<  template< typename...> class F
-                ,  typename B
-                ,  typename b       =  typename tail::template map_accum_right_with<F, B>::head
-                ,  typename c_list  =  typename tail::template map_accum_right_with<F, B>::tail::head
-                >
-        using map_accum_right_with  =  list< typename F<head, b>::head,
-                                             typename c_list::template cons< typename F<head, b>::tail::head > >;
 
+    private:
 
         // maccL: [ B x A --F--> B x C ] x B --> [A] --> B x [C]
         template<  template< typename...> class F
                 ,  typename B
-                ,  typename b       =  typename init::template map_accum_left_with<F, B>::head
-                ,  typename c_list  =  typename init::template map_accum_left_with<F, B>::tail::head
+                ,  typename b     =  typename F<B, head>::head
+                ,  typename c     =  typename F<B, head>::tail::head
+                ,  typename gamma =  typename tail::template map_accum_left_with<F, b>
                 >
-        using map_accum_left_with  =  list< typename F<last, b>::head,
-                                            typename c_list::template rcons< typename F<last, b>::tail::head > >;
+        struct map_accum_left_with_
+        {
+            using type =  aml::list< typename gamma::head,
+                                     typename gamma::tail::head::template cons<c> >;
+        };
 
+
+        // maccR: [ B x A --F--> B x C ] x B --> [A] --> B x [C]
+        template<  template< typename...> class F
+                ,  typename B
+                ,  typename b     =  typename F<B, last>::head
+                ,  typename c     =  typename F<B, last>::tail::head
+                ,  typename gamma =  typename init::template map_accum_right_with<F, b>
+                >
+        struct map_accum_right_with_
+        {
+            using type =  aml::list< typename gamma::head,
+                                     typename gamma::tail::head::template cons<c> >;
+        };
+
+
+    public:
+
+        // maccL: [ B x A --F--> B x C ] x B --> [A] --> B x [C]
+        template< template<typename...> class F
+                , typename B>
+        using map_accum_left_with = typename map_accum_left_with_<F, B>::type;
+
+
+        // maccL: [ B x A --F--> B x C ] x B --> [A] --> B x [C]
+        template<template< typename...> class F
+                , typename B >
+        using map_accum_right_with = typename map_accum_right_with_<F, B>::type;
 
 
         template< typename N >

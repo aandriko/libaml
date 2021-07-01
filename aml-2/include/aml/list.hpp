@@ -2,6 +2,7 @@
 
 #include "./functional.hpp"
 #include "./logic.hpp"
+#include "./object.hpp"
 
 namespace aml
 {
@@ -44,13 +45,8 @@ namespace aml
     using head = typename head_and_tail<X...>::head;
 
 
-    template< auto n, typename... X  >
+    template< typename n, typename... X  >
     using at  =  typename power< typename head_and_tail<X...>::tail, n >::return_::template apply<head>;
-
-
- template< typename N, typename... X>
-/    using at_l = at< N::eval(), X... >;
-
 
 
     template< typename    List
@@ -140,12 +136,12 @@ namespace aml
         using map_accum_right_with  = list<b, list<> >;
 
 
-        template<auto n>
-        using drop  =  typename bool_< n == 0 >::template enable< list<> >;
+        template<typename N>
+        using drop  =  typename bool_< N::eval() == 0 >::template enable< list<> >;
 
 
-        template<auto n>
-        using take  =  typename bool_< n == 0 >::template enable< list<> >;
+        template<typename N>
+        using take  =  typename bool_< N::eval() == 0 >::template enable< list<> >;
 
 
         template<  template<typename...> class  >
@@ -277,15 +273,12 @@ namespace aml
 
 
 
-        template< auto n >
-        using drop  =  typename monoid<list_tail>::template power<n, list<H, T...> >::template apply<list>;
+        template< typename N >
+        using drop  =  typename monoid<list_tail>::template power<N>::template apply_to<list<H, T...> >;
 
 
-        template< auto n >
-        using take  =  typename monoid<list_tail>::
-                       template power< size() - n, reverse >::
-                       template apply<list>::
-                       reverse;
+        template< typename N >
+        using take  =  typename monoid<list_tail>::template power< num<size() - N::eval() > >::template apply_to< reverse >::reverse;
 
 
         template<typename... Y>
@@ -436,6 +429,14 @@ namespace aml
         */
     };
 
+    template<typename List, typename... F>
+    using list_apply  =  typename List::template apply< identity<F...>::template apply_to >;
+
+
+    template<typename List, typename... F>
+    using list_pointwise_apply  =  typename List::template pointwise_apply< identity<F...>::template apply_to >;
+
+
     template<typename... List>
     using join = decltype( ( List() + ... + list<>() ) );
 
@@ -448,8 +449,8 @@ namespace aml
     using list_rcons  =  typename List::template rcons<X... >;
 
 
-    template< typename List, typename... no_args >
-    using list_reverse  =  typename identity<List, no_args...>::reverse;
+    template< typename... List >
+    using list_reverse  =  typename identity<List...>::reverse;
 
 
     template< typename List, typename F, typename... Z >

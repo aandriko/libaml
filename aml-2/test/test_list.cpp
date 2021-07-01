@@ -168,7 +168,165 @@ namespace test::list
         static_assert( std::is_same< l8::reverse, l7 >::value );
     }
 
+
+    template<typename List, typename X>
+    using G = typename List::template rcons<  aml::num< -X::eval() >  >;
+
+
+    void test_fold_left()
+    {
+        using aml::_;
+
+        using l0  =  aml::list<>;
+        using l1  =  aml::list< _<1> >;
+        using l2  =  aml::list< _<1>, _<2> >;
+        using l4  =  aml::list< _<1>, _<2>, _<3>, _<4> >;
+
+
+        using f0  =  l0::lfold_with< G, aml::list<> >;
+        using r0  =  aml::list< >;
+
+        static_assert( std::is_same< f0, r0 >::value );
+
+
+        using f1  =  l1::lfold_with< G, aml::list<> >;
+        using r1  =  aml::list< _<-1> >;
+
+        static_assert( std::is_same< f1, r1 >::value );
+
+
+        using f2  =  l2::lfold_with< G, aml::list<> >;
+        using r2  =  aml::list< _<-1>, _<-2> >;
+
+        static_assert( std::is_same< f2, r2 >::value );
+
+
+        using f4  =  l4::lfold_with< G, aml::list<> >;
+        using r4  =  aml::list< _<-1>, _<-2>, _<-3>, _<-4> >;
+
+        static_assert( std::is_same< f4, r4 >::value );
+    }
+
+
+    template<typename X, typename List>
+    using H  =  typename List::template cons<  aml::num< -X::eval() >  >;
+
+
+    void test_fold_right()
+    {
+        using aml::_;
+
+        using l0  =  aml::list<>;
+        using l1  =  aml::list< _<1> >;
+        using l2  =  aml::list< _<1>, _<2> >;
+        using l4  =  aml::list< _<1>, _<2>, _<3>, _<4> >;
+
+
+        using f0  =  l0::rfold_with< H, aml::list<> >;
+        using r0  =  aml::list< >;
+
+        static_assert( std::is_same< f0, r0 >::value );
+
+
+        using f1  =  l1::rfold_with< H, aml::list<> >;
+        using r1  =  aml::list< _<-1> >;
+
+        static_assert( std::is_same< f1, r1 >::value );
+
+
+        using f2  =  l2::rfold_with< H, aml::list<> >;
+        using r2  =  aml::list< _<-1>, _<-2> >;
+
+        static_assert( std::is_same< f2, r2 >::value );
+
+
+        using f4  =  l4::rfold_with< H, aml::list<> >;
+        using r4  =  aml::list< _<-1>, _<-2>, _<-3>, _<-4> >;
+
+        static_assert( std::is_same< f4, r4 >::value );
+    }
+
+
+    void test_scan_left()
+    {
+        using aml::_;
+
+        using l0  =  aml::list<>;
+        using l1  =  aml::list< _<1> >;
+        using l2  =  aml::list< _<1>, _<2> >;
+        using l4  =  aml::list< _<1>, _<2>, _<3>, _<4> >;
+
+
+        using f0  =  l0::lscan_with< G, aml::list<> >;
+        using r0  =  aml::list< aml::list<> >;
+
+        static_assert( std::is_same< f0, r0 >::value );
+
+
+        using f1  =  l1::lscan_with< G, aml::list<> >;
+        using r1  =  aml::list<  aml::list<>,  aml::list< _<-1> >  >;
+
+        static_assert( std::is_same< f1, r1 >::value );
+
+
+        using f2  =  l2::lscan_with< G, aml::list<> >;
+        using r2  =  aml::list< aml::list<>, aml::list< _<-1> >, aml::list< _<-1>, _<-2> > >;
+
+        static_assert( std::is_same< f2, r2 >::value );
+
+
+        using f4  =  l4::lscan_with< G, aml::list<> >;
+        using r4  =  aml::list<  aml::list<>,
+                                 aml::list< _<-1> >,
+                                 aml::list< _<-1>, _<-2> >,
+                                 aml::list< _<-1>, _<-2>, _<-3> >,
+                                 aml::list< _<-1>, _<-2>, _<-3>, _<-4> >  >;
+
+        static_assert( std::is_same< f4, r4 >::value );
+    }
+
+    void test_scan_right()
+    {
+        using aml::_;
+
+        using l0  =  aml::list<>;
+        using l1  =  aml::list< _<1> >;
+        using l2  =  aml::list< _<1>, _<2> >;
+        using l4  =  aml::list< _<1>, _<2>, _<3>, _<4> >;
+
+
+        using f0  =  l0::rscan_with< H, aml::list<> >;
+        using r0  =  aml::list< aml::list<> >;
+
+        static_assert( std::is_same< f0, r0 >::value );
+
+        using f1  =  l1::rscan_with< H, aml::list<> >;
+        using r1  =  aml::list<  aml::list<>,  aml::list< _<-1> >  >::reverse;
+
+        static_assert( std::is_same< f1, r1 >::value );
+
+        using f2  =  l2::rscan_with< H, aml::list<> >;
+        using r2  =  aml::list<  aml::list< _<-1>, _<-2> >,
+                                 aml::list< _<-2> > ,
+                                 aml::list<>  >;
+
+        static_assert( std::is_same< f2, r2 >::value );
+
+
+        using f4  =  l4::rscan_with< H, aml::list<> >;
+        using r4  =  aml::list<  aml::list<  _<-1>, _<-2>, _<-3>, _<-4>  >,
+                                 aml::list<         _<-2>, _<-3>, _<-4>  >,
+                                 aml::list<                _<-3>, _<-4>  >,
+                                 aml::list<                       _<-4>  >,
+                                 aml::list<                              >   >;
+
+        static_assert( std::is_same< f4, r4 >::value );
+
+    }
+
 }
+
+
 
 
 #include <iostream>
@@ -185,6 +343,10 @@ int main()
         test::list::test_drop_and_take,
         test::list::test_cons,
         test::list::test_reverse,
+        test::list::test_fold_left,
+        test::list::test_fold_right,
+        test::list::test_scan_left,
+        test::list::test_scan_right,
     };
 
 

@@ -103,13 +103,13 @@ namespace aml
         template< template< typename... > class
                 , typename Z
                 >
-        using rscan_with  =  Z;
+        using rscan_with  =  list<Z>;
 
 
         template< template< typename... > class
                 , typename Z
                 >
-        using lscan_with  =  Z;
+        using lscan_with  =  list<Z>;
 
 
         template< template< typename... > class

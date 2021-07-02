@@ -6,6 +6,7 @@
 #include <iostream>
 #include <boost/core/demangle.hpp>
 
+
 namespace test::list
 {
     template<auto n>
@@ -380,8 +381,83 @@ namespace test::list
         static_assert( std::is_same<macr_3, aml::list< _<6>, aml::list<_<-3>, _<-2>, _<-1> >  > >::value );
     }
 
-    template< typename X, typename Y >
+
+    template<typename N>
+    using is_even = aml::bool_< (N::eval() & 1) == 0 >;
+
+
+    void test_partition()
+    {
+        using aml::_;
+
+        using l0    =  aml::list<>::partition_with<is_even>;
+        using l1_a  =  aml::list< _<1> >::partition_with<is_even>;
+        using l1_b  =  aml::list< _<2> >::partition_with<is_even>;
+        using l2_a  =  aml::list< _<1>, _<2> >::partition_with<is_even>;
+        using l2_b  =  aml::list< _<1>, _<3> >::partition_with<is_even>;
+        using l2_c  =  aml::list< _<1>, _<4> >::partition_with<is_even>;
+        using l2_d  =  aml::list< _<2>, _<4> >::partition_with<is_even>;
+
+        using l4    =  aml::list< _<1>, _<2>, _<4>, _<3> >::partition_with<is_even>;
+
+        using a0    =  aml::list<>;
+        using r0    =  aml::list<>;
+
+        using a1_a  =  aml::list<>;
+        using r1_a  =  aml::list< _<1> >;
+
+        using a1_b  =  aml::list< _<2> >;
+        using r1_b  =  aml::list<>;
+
+        using a2_a  =  aml::list< _<2> >;
+        using r2_a  =  aml::list< _<1> >;
+
+        using a2_b  =  aml::list<>;
+        using r2_b  =  aml::list< _<1>, _<3> >;
+
+        using a2_c  =  aml::list< _<4> >;
+        using r2_c  =  aml::list< _<1> >;
+
+        using a2_d  =  aml::list< _<2>, _<4> >;
+        using r2_d  =  aml::list< >;
+
+        static_assert( std::is_same< a0, l0::accepted >::value);
+        static_assert( std::is_same< r0, l0::rejected >::value);
+
+
+        static_assert( std::is_same< a1_a, l1_a::accepted >::value);
+        static_assert( std::is_same< r1_a, l1_a::rejected >::value);
+
+
+        static_assert( std::is_same< a1_b, l1_b::accepted >::value);
+        static_assert( std::is_same< r1_b, l1_b::rejected >::value);
+
+
+        static_assert( std::is_same< a2_a, l2_a::accepted >::value);
+        static_assert( std::is_same< r2_a, l2_a::rejected >::value);
+
+
+        static_assert( std::is_same< a2_b, l2_b::accepted >::value);
+        static_assert( std::is_same< r2_b, l2_b::rejected >::value);
+
+
+        static_assert( std::is_same< a2_c, l2_c::accepted >::value);
+        static_assert( std::is_same< r2_c, l2_c::rejected >::value);
+
+
+        static_assert( std::is_same< a2_d, l2_d::accepted >::value);
+        static_assert( std::is_same< r2_d, l2_d::rejected >::value);
+
+        static_assert( std::is_same< l4::accepted, aml::list< _<2>, _<4> > >::value);
+        static_assert( std::is_same< l4::rejected, aml::list< _<1>, _<3> > >::value);
+
+    }
+
+    /*
+    //    template< typename X, typename Y, typename... >
+    template<typename X, typename Y>
     using less = aml::bool_< (X::eval() < Y::eval()) >;
+
 
     void test_sort()
     {
@@ -389,12 +465,85 @@ namespace test::list
 
         using unsorted_5 = aml::list< _<3>, _<2>, _<1>, _<4>, _<0> >;
 
-        unsorted_5::sort_with<less> sorted;
+        unsorted_5::sort_with_<less> sorted;
 
         std::cout << boost::core::demangle( typeid(sorted).name() ) << std::endl;
+
+    }
+    */
+
+    void test_split_by_first_occurence_of()
+    {
+        using aml::_;
+
+        using s0    =  aml::list<>::split_by_first_occurence_of< is_even >;
+        using s1_a  =  aml::list< _<2> >::split_by_first_occurence_of< is_even >;
+        using s1_r  =  aml::list< _<1> >::split_by_first_occurence_of< is_even >;
+
+        using s2    =  aml::list< _<1>, _<2> >::split_by_first_occurence_of<is_even>;
+        using s3    =  aml::list< _<2>, _<1> >::split_by_first_occurence_of<is_even>;
+
+        using s4    =  aml::list< _<1>, _<3>, _<2>, _<5> >::split_by_first_occurence_of<is_even>;
+
+        static_assert( std::is_same<s0::prefix, aml::list<> >::value );
+        static_assert( std::is_same<s0::suffix, aml::list<> >::value );
+
+        static_assert( std::is_same< s1_a::prefix, aml::list<> >::value );
+        static_assert( std::is_same< s1_a::suffix, aml::list<_<2>> >::value );
+
+        static_assert( std::is_same< s1_r::prefix, aml::list<_<1>> >::value );
+        static_assert( std::is_same< s1_r::suffix, aml::list< > >::value );
+
+        static_assert( std::is_same< s2::prefix, aml::list< _<1> > >::value );
+        static_assert( std::is_same< s2::suffix, aml::list< _<2> > >::value );
+
+        static_assert( std::is_same< s3::prefix, aml::list<> >::value );
+        static_assert( std::is_same< s3::suffix, aml::list< _<2>, _<1> > >::value );
+
+        static_assert( std::is_same< s4::prefix, aml::list< _<1>, _<3> > >::value );
+        static_assert( std::is_same< s4::suffix, aml::list< _<2>, _<5> > >::value );
+    }
+
+    void test_take_and_drop_while()
+    {
+        using aml::_;
+
+        using l0 = aml::list<>;
+        using l1 = aml::list< _<1> >;
+        using l2 = aml::list< _<0> >;
+        using l3 = aml::list< _<0>, _<1> >;
+        using l4 = aml::list< _<1>, _<0> >;
+        using l5 = aml::list< _<0>, _<2>, _<4>, _<3>, _<6> >;
+
+        using t0  = l0::take_while< is_even >;
+        using t1  = l1::take_while< is_even >;
+        using t2  = l2::take_while< is_even >;
+        using t3  = l3::take_while< is_even >;
+        using t4  = l4::take_while< is_even >;
+        using t5  = l5::take_while< is_even >;
+
+        using d0  = l0::drop_while< is_even >;
+        using d1  = l1::drop_while< is_even >;
+        using d2  = l2::drop_while< is_even >;
+        using d3  = l3::drop_while< is_even >;
+        using d4  = l4::drop_while< is_even >;
+        using d5  = l5::drop_while< is_even >;
+
+        static_assert( std::is_same< t0, aml::list<> >::value );
+        static_assert( std::is_same< t1, aml::list<> >::value );
+        static_assert( std::is_same< t2, aml::list<_<0>>>::value );
+        static_assert( std::is_same< t3, aml::list<_<0>> >::value );
+        static_assert( std::is_same< t4, aml::list< > >::value );
+        static_assert( std::is_same< t5, aml::list< _<0>, _<2>, _<4> > >::value );
+
+        static_assert( std::is_same< d0, aml::list<> >::value );
+        static_assert( std::is_same< d1, aml::list<_<1>> >::value );
+        static_assert( std::is_same< d2, aml::list<> >::value );
+        static_assert( std::is_same< d3, aml::list<_<1>> >::value );
+        static_assert( std::is_same< d4, aml::list< _<1>, _<0> > >::value );
+        static_assert( std::is_same< d5, aml::list< _<3>, _<6> > >::value );
     }
 }
-
 
 
 #include <iostream>
@@ -417,7 +566,9 @@ int main()
         test::list::test_scan_right,
         test::list::test_map_accum_left,
         test::list::test_map_accum_right,
-        test::list::test_sort,
+        test::list::test_partition,
+        test::list::test_split_by_first_occurence_of
+        test::test::test_take_and_drop_while
     };
 
 

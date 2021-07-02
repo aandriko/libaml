@@ -85,6 +85,7 @@ namespace aml
 
         static constexpr auto size() { return 0; }
 
+
         template< typename... X >
         using cons  =  list< X... >;
 
@@ -168,25 +169,19 @@ namespace aml
 
 
         template<template<typename...> class>
-        using split_by_first_occurence_of  =  list< list<>, list<> >;
-
-
-        template<template<typename...> class >
-        using sort_with  =  list<>;
+        struct split_by_first_occurence_of
+        {
+            using prefix = list<>;
+            using suffix = list<>;
+        };
 
 
         template<typename... X>
         list<X...> operator+(list<X...>);
 
-    private:
+        //    private:
         template<typename...>
         friend struct list;
-
-        template<  template< typename... > class  >
-        struct sort_with_
-        {
-            using type = list<>;
-        };
     };
 
 
@@ -349,7 +344,7 @@ namespace aml
         struct partition_with
         {
         private:
-            using partition = rfold_with< fix_predicate<Predicate>::template add_to_pair, list< list<>, list<> > >;
+            using partition = lfold_with< fix_predicate<Predicate>::template add_to_pair, list< list<>, list<> > >;
 
         public:
             using accepted  =  typename partition::head;
@@ -364,90 +359,42 @@ namespace aml
         struct split_by_first_occurence_of
         {
         private:
-            struct ignore_t;
 
-            using  B_start = list< list<>, list<> >; // second list: no occurrence of Pred
-                                               // first list: Pred has been satisfied for first member
+            using Z = list< list<>, list<> >;
+
+            struct add_to_prefix
+            {
+                template< typename Scanned, typename A >
+                using action  =  list< typename Scanned::head::template rcons<A>, typename Scanned::tail::head >;
+            };
+
+            struct add_to_suffix
+            {
+                template< typename Scanned, typename A >
+                using action  =  list< typename Scanned::head, typename Scanned::tail::head::template rcons<A> >;
+            };
+
+            template<typename Scanned, typename A>
+            using add  =  typename conditional<    bool_< Pred<A>::eval() || Scanned::tail::head::size() != 0 >,
+                                                   add_to_suffix,
+                                                   add_to_prefix    >::template action< Scanned, A >;
 
 
-            template< typename B_times_A
-                    , typename B = typename B_times_A::head
-                    , typename A = typename B_times_A::tail::head
-                    >
-            using Pred_  =  bool_<B::head::size() != 0 || Pred<A>::eval()>;
-
-
-            template<typename B, typename A>
-            using F  =  list< typename fix_predicate< Pred_ >::template add_to_pair<B, A>, ignore_t >;
-
-            using partition  =  map_accum_left_with<F, B_start>;
+            using partition  =  lfold_with< add, Z >;
 
         public:
 
-            using rejected  =  typename partition::tail::head; // rejected items come before(!)
-            using accepted  =  typename partition::head;       // accepted items in the parameter list
-
-
-            template< template<typename...> class G >
-            using apply = G< rejected, accepted >;
+            using prefix  =  typename partition::head;
+            using suffix  =  typename partition::tail::head;
         };
-
-
-    private:
-
-
-        template<typename Numbered>
-        using remove_numbering = typename Numbered::head;
-
-
-        template<typename List, typename X>
-        using add_with_index = typename List::template rcons< list<X, num<List::size()> > >;
-
-        template<template<typename...> class Less>
-        struct stable_less
-        {
-            template< typename X, typename Y>
-            using apply_to = bool_< Less< typename X::head, typename Y::head >::eval()  ||
-                                    (    Less< typename Y::head, typename X::head >::eval() == false &&
-                                         X::tail::head::eval() <  Y::tail::head::eval()    ) >;
-        };
-
-        template<typename...> friend struct list;
-
-        template<  template< typename... > class Less  >
-        struct sort_with_
-        {
-            using pivot = head;
-
-            using partition = partition_with<curry_and_bind< Less, pivot >::template apply_to >;
-            // partition::accepted = { y | pivot <  y }
-            // partition::rejected = { y | pivot >= y }
-
-            using  upper_part = typename partition::accepted::template sort_with_<Less>::type;
-            using  lower_part = typename partition::rejected::template sort_with_<Less>::type;
-
-            using type = typename lower_part::template rcons<pivot>::template apply< upper_part::template cons >;
-        };
-
-    public:
-        template< template<typename...> class Less
-                >
-        using sort_with  =  typename list< H, T... >::
-            template lfold_with< add_with_index, list<> >::
-            template sort_with_<  stable_less< Less >::template apply_to  >::
-            type;
-            //              template pointwise_apply< remove_numbering >;
-        
-
-        /*
-
-        template< template<typename...> class Pred>
-        using take_while = typename split_by_first_occurence_of< predicates::none<Pred>::template apply_to >::rejected;
 
 
         template< template<typename...> class Pred>
-        using drop_while = typename split_by_first_occurence_of< predicates::none<Pred>::template apply_to >::accepted;
-        */
+        using take_while = typename split_by_first_occurence_of< predicates::none<Pred>::template apply_to >::prefix;
+
+
+        template< template<typename...> class Pred>
+        using drop_while = typename split_by_first_occurence_of< predicates::none<Pred>::template apply_to >::suffix;
     };
 
     template<typename List, typename... F>
@@ -513,8 +460,8 @@ namespace aml
     using list_take_while  =  typename List::template take_while< identity<Cond...>::template apply_to >;
 
 
-    template< typename List, typename... Less >
-    using list_sort  =  typename List::template sort_with< identity<Less...>::template apply_to >;
+    //    template< typename List, typename... Less >
+    //    using list_sort  =  typename List::template sort_with< identity<Less...>::template apply_to >;
 
 
     template< typename List, typename... Pred >

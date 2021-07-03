@@ -214,15 +214,43 @@ namespace aml
     template< typename... T >
     using limit  =  typename composition<>::template limit<T...>;
 
-
+ 
     template< template<typename... > class F >
     struct monoid
     {
+       template<typename...>
+        struct action;
+
+
+        struct empty
+        {
+            using type = action<empty>;
+            struct subterms
+            {
+                template< template<typename...> class >
+                using apply = subterms;
+            };
+        };
+
+ 
+        template<typename List, typename R = typename List::template apply<F>::template apply<action> >
+        static R eternal_(decltype(nullptr), decltype(nullptr));
+
+
+        template<typename List>
+        static empty eternal_(decltype(nullptr), ... );
+
+        template<typename... X>
+        using eternal_action_on_F  =  decltype( eternal_<list<X...> >(nullptr, nullptr) );
+
+
         template< typename... X >
         struct action
         {
-            using type     =  action< F< X... > >;
+                        using type     =  action< F< X... > >;
+            //            using type  = eternal_action_on_F<X...>;
 
+            
             struct subterms
             {
                 template< template<typename... > class G >

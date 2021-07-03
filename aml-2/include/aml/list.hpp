@@ -3,6 +3,8 @@
 #include "./functional.hpp"
 #include "./logic.hpp"
 #include "./object.hpp"
+#include "./sort.hpp"
+
 
 namespace aml
 {
@@ -32,12 +34,21 @@ namespace aml
         struct tail
         {
             using type     =  typename head_and_tail<T...>::tail;
-            using return_  =  head_and_tail< H, T... >;
+            using return_  =  head_and_tail< H, T... >;        // This includes the head!
         };
 
 
         template<  template<typename...> class F  >
         using apply  = F< H, T... >;
+    };
+
+
+    template< template<typename, typename> class F>
+    struct binary
+    {
+        template< typename... X >
+        using apply_to  =  F< typename head_and_tail<X...>::head,
+                              typename head_and_tail<X...>::tail::type::return_::head >;
     };
 
 
@@ -71,6 +82,28 @@ namespace aml
     using list_init  =  typename identity< List, no_args... >::init;
 
 
+    template< typename    List
+            , typename... no_args
+            >
+    using list_relaxed_head  = typename identity<List, no_args...>::relaxed_head;
+
+
+    template< typename    List
+            , typename... no_args
+            >
+    using list_relaxed_tail  =  typename identity<List, no_args...>::relaxed_tail;
+
+
+    template< typename List, typename... no_args >
+    using list_relaxed_last  =  typename identity<List, no_args...>::relaxed_last;
+
+
+    template< typename List
+            , typename... no_args
+            >
+    using list_relaxed_init  =  typename identity< List, no_args... >::relaxed_init;
+
+
     template< typename... >
     struct list;
 
@@ -78,9 +111,12 @@ namespace aml
     template<>
     struct list<>
     {
-        //        using head  =  list<>;  // useful definitions for monoid<list_head> and monoid<list_tail>
-        //        using tail  =  list<>;  // (meta-ducktyping).
-        using tail = decltype(nullptr); // problematic hack, has to go later
+        struct no_content;
+
+        using relaxed_head  =  no_content;
+        using relaxed_tail  =  no_content;
+        using relaxed_init  =  no_content;
+        using relaxed_last  =  no_content;
 
 
         static constexpr auto size() { return 0; }
@@ -176,12 +212,13 @@ namespace aml
         };
 
 
+        template< template<typename...> class >
+        using sort_with = list<>;
+
+
         template<typename... X>
         list<X...> operator+(list<X...>);
 
-        //    private:
-        template<typename...>
-        friend struct list;
     };
 
 
@@ -215,6 +252,18 @@ namespace aml
 
 
         using last  =  typename reverse::head;
+
+
+        using relaxed_head = head;
+
+
+        using relaxed_tail = tail;
+
+
+        using relaxed_init = init;
+
+
+        using relaxed_last = last;
 
 
         template<  template< typename... > class F  >
@@ -297,11 +346,11 @@ namespace aml
 
 
         template< typename N >
-        using drop  =  typename monoid<list_tail>::template power<N>::template apply_to<list<H, T...> >;
+        using drop  =  typename monoid<list_relaxed_tail>::template power<N>::template apply_to<list<H, T...> >;
 
 
         template< typename N >
-        using take  =  typename monoid<list_tail>::template power< num<size() - N::eval() > >::template apply_to< reverse >::reverse;
+        using take  =  typename monoid<list_relaxed_tail>::template power< num<size() - N::eval() > >::template apply_to< reverse >::reverse;
 
 
         template<typename... Y>
@@ -389,6 +438,10 @@ namespace aml
         };
 
 
+        template< template<typename...> class Less >
+        using sort_with  =  typename aml::sort<H, T...>::template with< Less >;
+
+
         template< template<typename...> class Pred>
         using take_while = typename split_by_first_occurence_of< predicates::none<Pred>::template apply_to >::prefix;
 
@@ -460,8 +513,8 @@ namespace aml
     using list_take_while  =  typename List::template take_while< identity<Cond...>::template apply_to >;
 
 
-    //    template< typename List, typename... Less >
-    //    using list_sort  =  typename List::template sort_with< identity<Less...>::template apply_to >;
+    template< typename List, typename... Less >
+    using list_sort  =  typename List::template sort_with< identity<Less...>::template apply_to >;
 
 
     template< typename List, typename... Pred >

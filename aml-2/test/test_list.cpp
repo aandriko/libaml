@@ -47,6 +47,7 @@ namespace test::list
         static_assert( std::is_same< aml::list_last<t3>, int*** >::value );
     }
 
+
     template< typename... > struct F {};
 
 
@@ -453,24 +454,6 @@ namespace test::list
 
     }
 
-    /*
-    //    template< typename X, typename Y, typename... >
-    template<typename X, typename Y>
-    using less = aml::bool_< (X::eval() < Y::eval()) >;
-
-
-    void test_sort()
-    {
-        using aml::_;
-
-        using unsorted_5 = aml::list< _<3>, _<2>, _<1>, _<4>, _<0> >;
-
-        unsorted_5::sort_with_<less> sorted;
-
-        std::cout << boost::core::demangle( typeid(sorted).name() ) << std::endl;
-
-    }
-    */
 
     void test_split_by_first_occurence_of()
     {
@@ -543,6 +526,39 @@ namespace test::list
         static_assert( std::is_same< d4, aml::list< _<1>, _<0> > >::value );
         static_assert( std::is_same< d5, aml::list< _<3>, _<6> > >::value );
     }
+
+
+
+    //    template< typename X, typename Y, typename... >
+    //    template<typename X, typename Y, typename...>
+    //    using less = aml::bool_< (X::eval() < Y::eval()) >;
+
+    template<typename...>
+    struct less_;
+
+    template<typename X, typename Y>
+    struct less_<X, Y>
+    {
+        using type = aml::bool_< (X::eval() < Y::eval()) >;
+    };
+
+
+    template<typename... X>
+    using less = typename less_<X...>::type;
+
+
+    void test_sort()
+    {
+        using aml::_;
+
+        using unsorted_5 = aml::list< _<3>, _<2>, _<1>, _<4>, _<0> >;
+
+        unsorted_5::sort_with<less> sorted;
+
+        std::cout << boost::core::demangle( typeid(sorted).name() ) << std::endl;
+
+    }
+
 }
 
 
@@ -567,8 +583,10 @@ int main()
         test::list::test_map_accum_left,
         test::list::test_map_accum_right,
         test::list::test_partition,
-        test::list::test_split_by_first_occurence_of
-        test::test::test_take_and_drop_while
+        test::list::test_split_by_first_occurence_of,
+        test::list::test_take_and_drop_while,
+        test::list::test_sort
+
     };
 
 

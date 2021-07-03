@@ -43,14 +43,6 @@ namespace aml
     };
 
 
-    template< template<typename, typename> class F>
-    struct binary
-    {
-        template< typename... X >
-        using apply_to  =  F< typename head_and_tail<X...>::head,
-                              typename head_and_tail<X...>::tail::type::return_::head >;
-    };
-
 
     template<typename... X>
     using head = typename head_and_tail<X...>::head;

@@ -533,29 +533,32 @@ namespace test::list
     //    template<typename X, typename Y, typename...>
     //    using less = aml::bool_< (X::eval() < Y::eval()) >;
 
-    template<typename...>
-    struct less_;
-
     template<typename X, typename Y>
-    struct less_<X, Y>
-    {
-        using type = aml::bool_< (X::eval() < Y::eval()) >;
-    };
+    using less  = aml::bool_< (X::eval() < Y::eval()) >;
 
 
     template<typename... X>
-    using less = typename less_<X...>::type;
-
+    using size_less  =  aml::bool_< (sizeof( aml::at< aml::_<0>, X...>) < sizeof( aml::at< aml::_<1>, X...>)) >;
 
     void test_sort()
     {
+
         using aml::_;
 
         using unsorted_5 = aml::list< _<3>, _<2>, _<1>, _<4>, _<0> >;
+        using sorted_5 = unsorted_5::sort_with<less>;
+        static_assert( std::is_same< sorted_5, aml::list< _<0>, _<1>, _<2>, _<3>, _<4> > >::value );
 
-        unsorted_5::sort_with<less> sorted;
+        static_assert( std::is_same< aml::list<>::sort_with<less>, aml::list<> >::value );
 
-        std::cout << boost::core::demangle( typeid(sorted).name() ) << std::endl;
+        // test stability
+        using list  =  aml::list< unsigned char, unsigned int, int, signed char, unsigned int, int, unsigned int>;
+        using sorted_list  =  aml::list< unsigned char, signed char,
+                                         unsigned int, int, unsigned int, int, unsigned int >;
+
+        static_assert( std::is_same< list::sort_with<size_less>, sorted_list >::value );
+
+        static_assert( std::is_same< aml::list_sort<list, aml::function<size_less> >, sorted_list>::value );
 
     }
 

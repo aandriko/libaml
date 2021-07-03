@@ -17,6 +17,9 @@ namespace aml
         template<typename...>
         friend struct sort;
 
+
+
+        // quick sort for types
         template<typename List, template<typename...> class Less>
         struct sort_list_
         {
@@ -45,6 +48,36 @@ namespace aml
                                                sort_empty_list_ >::type;
         };
 
+
+        // We add stability to quicksort bysorting pairs of types and their index in the original list
+        template<typename X, auto n>
+        struct stabilized
+        {
+            static constexpr auto index() { return n; }
+            using type = X;
+        };
+
+
+        template<typename List, typename X>
+        using add_to_stabilizer  =  typename List::template rcons< stabilized<X, List::size()> >;
+
+        template<typename... X>
+        using stabilized_list = typename list<X...>::template lfold_with<add_to_stabilizer, list<> >;
+
+        template<template<typename...> class Less>
+        struct stabilized_less
+        {
+            template<typename Left, typename Right>
+            using apply_to  =  bool_<    Less< typename Left::type, typename Right::type >::eval()
+                                         ||
+                                         ( ! Less< typename Right::type, typename Left::type >::eval()
+                                           &&
+                                           Left::index() < Right::index() )    >;
+        };
+
+        template<typename X>
+        using remove_stabilizer = typename X::type;
+
     public:
 
         template< template<typename...> class >
@@ -56,7 +89,13 @@ namespace aml
     struct sort
     {
         template< template<typename...> class Less >
-        using with  =  typename sort<>::sort_list_< list<X...>, Less >::type;
+        using with  =  typename sort<>::
+                       template sort_list_< typename sort<>::template stabilized_list<X...>,
+                                            sort<>::template stabilized_less<Less>::template apply_to >::
+                       type::
+                       template pointwise_apply< sort<>::template remove_stabilizer >;
+
+
     };
 }
 

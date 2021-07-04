@@ -7,28 +7,6 @@
 
 namespace aml
 {
-    /*
-    template< auto... n >
-    struct delay
-    {
-        static_assert( sizeof...(n) == 1 );
-    };
-
-
-    template< auto n >
-    struct delay<n>
-    {
-        static_assert( n != 0, "A delay must be strictly positive. " );
-    };
-
-
-    template<>
-    struct delay<>
-    { };
-
-    */
-
-
     template<typename... >
     struct lazy;
 
@@ -110,22 +88,6 @@ namespace aml
             , typename n = infinity
             >
     using evaluate  =  typename evaluation_depth< n >::template evaluate< X >;
-
-
-    /*
-    template<  typename X, typename N = infinity_t  >
-    using evaluate_l  =  evaluate<X, N::eval() >;
-
-
-    template<  template< typename... > class F
-            ,  auto n = 1
-            >
-    struct lazy
-    {
-        template< typename... X >
-        using apply_to = lazy_l<  num<n>, typename curry<F, 0>::template apply_to<>, X...  >;
-    };
-    */
 
 
     template<  template<typename... > class F, auto n = 1 >

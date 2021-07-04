@@ -1,3 +1,13 @@
+/////////////////////////////////////////////////////////////////////////////////////////////
+// Copyright (c) 2021 Andreas Milton Maniotis.
+//
+// Email: andreas.maniotis@gmail.com
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+
 #include "aml/apply.hpp"
 #include "aml/string.hpp"
 #include "aml/basic_types.hpp"
@@ -9,7 +19,7 @@ namespace test::basic_types
 {
     template<typename...> class F { };
 
-    
+
     void test_enable_if()
     {
         using t = aml::enable<int>::if_<aml::true_>;
@@ -19,9 +29,9 @@ namespace test::basic_types
         using s = aml::if_<aml::true_>::enable<int>;
 
         static_assert( std::is_same<s, int>::value, "");
-        
+
         // The following construction should lead to a compile-time error
-        // using t = aml::enable<int>::if_<aml::false_>;   
+        // using t = aml::enable<int>::if_<aml::false_>;
 
         // enable<...>::if_<...> cannot be used for sfinae.
         // This is instead done with the types true_::sfinae == true_ and false_
@@ -32,7 +42,7 @@ namespace test::basic_types
     {
         static_assert(std::is_same<aml::bool_<true>, aml::true_>::value, "");
         static_assert(std::is_same<aml::bool_<false>, aml::false_>::value, "");
-        
+
 
         static_assert(std::is_same<aml::all<>, aml::true_>::value, "");
         static_assert(std::is_same<aml::one<>, aml::false_>::value, "");
@@ -51,7 +61,7 @@ namespace test::basic_types
         static_assert(std::is_same<aml::none< aml::true_, aml::false_, aml::false_ >, aml::true_>::value, "");
     }
 
-    
+
     template<typename T>
     using is_int = aml::bool_< std::is_same<int, T>::value >;
 
@@ -64,7 +74,7 @@ namespace test::basic_types
     template<typename T>
     using sfinae_tag_used = decltype(sfinae_tag_used_<T>(nullptr, nullptr));
 
-    
+
     void test_sfinae()
     {
         static_assert(std::is_same<aml::true_, aml::true_::sfinae>::value, "");
@@ -108,7 +118,7 @@ namespace test::basic_types
 
     template<typename T>
     using has_type = decltype(has_type_<T>(nullptr, nullptr));
-        
+
     void test_add_type()
     {
         struct A {};
@@ -119,10 +129,10 @@ namespace test::basic_types
         static_assert( has_type<B>::eval() == true, "");
 
         static_assert( std::is_same<aml::add_type<B>, A>::value, "");
-        static_assert( std::is_same<aml::add_type<aml::add_type<C> >, A>::value, "");       
+        static_assert( std::is_same<aml::add_type<aml::add_type<C> >, A>::value, "");
     }
 
-    
+
     void test_identity()
     {
         static_assert(std::is_same<int, aml::identity<int> >::value, "");
@@ -138,13 +148,13 @@ namespace test::basic_types
     class L { };
 
     using t = H<int, K<char, L<double, void*> > >;
-    
+
     using sub_t  = aml::term<t>::subterms;
-    
+
     template<typename... X>
     using tmpl_t = aml::term<t>::template function<X...>;
 
-    
+
     void test_term()
     {
         static_assert( std::is_same<aml::term<int>::function<char*>, char*>::value, "");
@@ -160,7 +170,7 @@ namespace test::basic_types
         static_assert( std::is_same<aml::term<H<>>::function<int>, H<int> >::value, "");
     }
 
-  
+
     void test_hull()
     {
           static_assert(std::is_same< aml::hull<void>::type, void >::value, "");
@@ -168,20 +178,19 @@ namespace test::basic_types
 
 
     template<typename... > class X;
-    
+
     void test_function()
     {
         static_assert(std::is_same< aml::function<X>::apply_to<int, char*, double**>, X<int, char*, double**> >::value, "" );
         static_assert(std::is_same< aml::function<X>::apply_to<>, X<> >::value, "" );
-        
     }
 
-    
+
     void test_bra_and_ket()
     {
         using t0 = aml::bra<F>::ket<aml::conslist<int, char>>;
         using t1 = aml::ket<aml::conslist<int, char>>::bra<F>;
-        
+
         static_assert(std::is_same<t0, t1>::value, "");
         static_assert(std::is_same<t0, F<int, char> >::value, "");
     }
@@ -189,24 +198,22 @@ namespace test::basic_types
 
     template<auto... x>
     struct reader : aml::object<x>... { };
-    
-    
+
+
     void test_object()
     {
         static_assert( aml::object<7>::eval() == 7, "");
 
-        
         static_assert( std::is_same
                        <
                            reader<7, 2, 3, test_object>,
                            aml::object<>::list<7, 2, 3, test_object>::apply<reader>
                        >::value, "");
 
-        
         reader<7, 2, 3, test_object> r;
         static_cast<void>(r);
     }
-    
+
 }
 
 
@@ -227,7 +234,7 @@ int main()
         test::basic_types::test_is_same,
         test::basic_types::test_add_type,
         test::basic_types::test_identity,
-        test::basic_types::test_term,        
+        test::basic_types::test_term,
         test::basic_types::test_hull,
         test::basic_types::test_function,
         test::basic_types::test_bra_and_ket,

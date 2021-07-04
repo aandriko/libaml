@@ -1,3 +1,13 @@
+/////////////////////////////////////////////////////////////////////////////////////////////
+// Copyright (c) 2021 Andreas Milton Maniotis.
+//
+// Email: andreas.maniotis@gmail.com
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+
 #include "aml/structure/conslist_structure.hpp"
 #include "aml/structure/select_indices_structure.hpp"
 #include "aml/structure/term_structure.hpp"
@@ -38,7 +48,7 @@ namespace test::linker
 
         //        static_assert(std::is_same< t::tail::at<1>, void*>::value, "");
     }
-    
+
 }
 
 

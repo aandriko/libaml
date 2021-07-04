@@ -1,3 +1,13 @@
+/////////////////////////////////////////////////////////////////////////////////////////////
+// Copyright (c) 2021 Andreas Milton Maniotis.
+//
+// Email: andreas.maniotis@gmail.com
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+
 #include "aml/apply.hpp"
 #include "aml/string.hpp"
 #include "aml/basic_types.hpp"
@@ -10,14 +20,14 @@ namespace test::application
     template<typename... >
     struct F {};
 
-        
+
     void test_single_application()
     {
         using aml::eval;
-        
+
         using t0 = aml::eval< aml::apply<0, F> >;
 
-        
+
         static_assert(std::is_same< eval<      int>,           int >::value, "");
         static_assert(std::is_same< eval<       t0>,           F<> >::value, "");
 
@@ -32,7 +42,7 @@ namespace test::application
 
     template<typename...> class G {};
 
-    
+
     template<typename... Args>
     struct H
     {
@@ -53,25 +63,22 @@ namespace test::application
         aml::eval
         <
         typename aml::apply<0,
-                            
+
                             aml::conditional,
-                            
+
                             aml::bool_<sizeof...(Args) == 1>,
 
                             aml::apply<0, G, Args...>,
-                            
-                            aml::apply<n, aml::add_type, H<Args...> >
 
-                          
-                            
+                            aml::apply<n, aml::add_type, H<Args...> >
                             >
         >;
-    
-    
+
+
     void test_multiple_applications()
     {
         using namespace aml;
-        
+
         static_assert(is_same< type<1, int>, G<int>>::eval(), "");
         static_assert(is_same< type<1, int, char>, int>::eval(), "");
 
@@ -90,7 +97,7 @@ namespace test::application
     {
         using t0 = aml::bra<F>::ket<int, char>;
         using t1 = aml::ket<int, char>::bra<F>;
-        
+
         static_assert(std::is_same<t0, t1>::value, "");
 
         static_assert(std::is_same<aml::eval<t0>::type, F<int, char> >::value, "");

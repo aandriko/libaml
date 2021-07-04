@@ -1,3 +1,13 @@
+/////////////////////////////////////////////////////////////////////////////////////////////
+// Copyright (c) 2021 Andreas Milton Maniotis.
+//
+// Email: andreas.maniotis@gmail.com
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+
 #include "aml/conslist.hpp"
 #include "aml/string.hpp"
 
@@ -14,7 +24,7 @@ namespace test::conslist
     template<typename...>
     class Template {};
 
-    
+
     void test_empty_list()
     {
         using aml::conslist;
@@ -38,13 +48,11 @@ namespace test::conslist
         static_assert(std::is_same<aml::rfold<conslist<>, aml::function<Template>, void***>, void***>::value, "");
     }
 
-    
-    
+
     void test_non_empty_list()
     {
         using aml::conslist;
 
-        
         using list_t = conslist< type<1>, type<2>, type<3> >;
 
         static_assert(list_t::size() == 3, "");
@@ -92,7 +100,7 @@ namespace test::conslist
 
     template<auto >
     struct idx;
-    
+
     void test_join()
     {
         using list_0 = aml::conslist<>;
@@ -116,7 +124,7 @@ namespace test::conslist
 
         static_assert(std::is_same< aml::join<list_0, list_1, list_2, list_3>, j_4 >::value, "");
     }
-    
+
 }
 
 

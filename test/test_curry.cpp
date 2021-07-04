@@ -1,3 +1,13 @@
+/////////////////////////////////////////////////////////////////////////////////////////////
+// Copyright (c) 2021 Andreas Milton Maniotis.
+//
+// Email: andreas.maniotis@gmail.com
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+
 #include "aml/curry.hpp"
 #include "aml/apply.hpp"
 #include "aml/string.hpp"
@@ -13,7 +23,7 @@ namespace test::curry
     struct F {};
 
     using curried_F = aml::curry<3, F>;
-    
+
     void test_curry_and_uncurry()
     {
         using f = curried_F::apply_to<void*, void**, void***>::apply_to<int>;

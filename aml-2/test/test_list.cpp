@@ -546,19 +546,25 @@ namespace test::list
         using aml::_;
 
         using unsorted_5 = aml::list< _<3>, _<2>, _<1>, _<4>, _<0> >;
+
         using sorted_5 = unsorted_5::sort_with<less>;
         static_assert( std::is_same< sorted_5, aml::list< _<0>, _<1>, _<2>, _<3>, _<4> > >::value );
+
 
         static_assert( std::is_same< aml::list<>::sort_with<less>, aml::list<> >::value );
 
         // test stability
         using list  =  aml::list< unsigned char, unsigned int, int, signed char, unsigned int, int, unsigned int>;
-        using sorted_list  =  aml::list< unsigned char, signed char,
-                                         unsigned int, int, unsigned int, int, unsigned int >;
 
-        static_assert( std::is_same< list::sort_with<size_less>, sorted_list >::value );
+        using expected_sorting  =  aml::list< unsigned char, signed char,
+                                              unsigned int, int, unsigned int, int, unsigned int >;
 
-        static_assert( std::is_same< aml::list_sort<list, aml::function<size_less> >, sorted_list>::value );
+        using acquired_sorting = list::sort_with<size_less>;
+
+
+        static_assert( std::is_same< acquired_sorting, expected_sorting >::value );
+
+        static_assert( std::is_same< aml::list_sort<list, aml::function<size_less> >, expected_sorting>::value );
 
     }
 

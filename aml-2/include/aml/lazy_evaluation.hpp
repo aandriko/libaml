@@ -90,10 +90,10 @@ namespace aml
     using evaluate  =  typename evaluation_depth< n >::template evaluate< X >;
 
 
-    template<  template<typename... > class F, auto n = 1 >
+    template<  template<typename... > class F, typename N = num<1> >
     struct lazy_function
     {
         template< typename... X >
-        using apply_to  =  lazy< num<n>, typename curry< F, num<0> >::template apply_to<>, X... >;
+        using apply_to  =  lazy< N, typename curry< F, num<0> >::template apply_to<>, X... >;
     };
 }

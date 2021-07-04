@@ -54,6 +54,16 @@ namespace test::lazy
 
         static_assert( std::is_same< t14, f< int*, f< int**, int*** > > >::value );
 
+        using l1  =  aml::lazy_function< f, aml::_<2> >::apply_to< int*, int**, int*** >;
+        using l2  =  aml::evaluate<l1, aml::_<1> >;
+        using l3  =  aml::evaluate<l1, aml::_<2> >;
+        using l4  =  aml::evaluate<l1>;
+
+        using evaluated = f<int*, int**, int***>;
+
+        static_assert( std::is_same< evaluated, aml::evaluate<l2, aml::_<1> > >::value );
+        static_assert( std::is_same< evaluated, l3 >::value );
+        static_assert( std::is_same< evaluated, l4>::value );
     }
 }
 

@@ -1,0 +1,65 @@
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+// Copyright (c) 2021 Andreas Milton Maniotis.
+//
+// Email: andreas.maniotis@gmail.com
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+Aml is a small template metaprogramming library that draws inspiration from Haskell,
+universal algebra and general category theory. Its main objective is the provision a
+boilerplate-free generic metaprogramming with reusable and re-configurable components.
+Ultimately, aml shall give a foundation to a meta-metaprogramming library, where a
+small domain specific language will be used to “compute” class templates by simple
+human-readable term equations.
+
+
+
+
+At this stage the following components are ready:
+
+aml-2/include/functional.hpp       : Higher Order meta-functions (currying, exponents).
+aml-2/include/lazy_evaluation.hpp  : A simple framework for delayed instantiation of templates.
+aml-2/include/list.hpp             : A conslist data-type with functionality similar to Haskell's Data.List.
+aml-2/include/object.hpp           : A simple data-type to treat objects as types.
+aml-2/include/set.hpp              : Sets of types.
+aml-2/include/sort.hpp             : Stable sorting of types
+aml-2/include/term_algebra.hpp     : Syntactic decomposition of template types.
+
+These aforementioned components are stable and well-tested with gcc and clang. ( Go to aml-2/test and type make).
+
+
+
+
+The library shall grow in three phases:
+
+
+Part 1. Provision of core data structures.
+
+Part 2. Provision of a (meta-)linker that allows to develop abstract data types from separated reusable
+        components, which can refer to each other.
+
+Part 3. Provision of translation tools of a lexer, parser and an interpreter for a meta-language to describe
+        simple and reusable template meta-programs.
+
+
+
+Hitherto Progress:
+
+Part 1: Almost complete.
+
+Part 2: Proof of concept given. ( Linker was implemented and tested. Code in include/aml/linker.hpp ).
+
+Part 3: Prototypes for parsing automata have been studied.
+        Furthermore, a simple domain specific language for specifying template metaprograms has been
+        specified. The main challenge in this context is a correct mapping of the evaluation strategy
+        of the domain specific language to substitution policy of C++. This can be done with ease by
+        using the lazy evaluator given in aml-2/include/lazy_evaluation.hpp.
+
+
+
+Next steps in July/August 2021:  Finalization and documentation of part 1.
+
+

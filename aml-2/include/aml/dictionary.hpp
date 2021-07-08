@@ -77,17 +77,17 @@ namespace aml
 
 
         template< typename Key_ >
-        using at  =  typename entry_list::
-                     template split_by_first_occurence_of< key_matches_entry<Key_>::
-                                                           template apply_to >::
-                     suffix::
-                     template rcons< sentinel<Sentinel>...>::
-                     head::
-                     value;
+        using lookup  =  typename entry_list::
+                         template split_by_first_occurence_of< key_matches_entry<Key_>::
+                                                               template apply_to >::
+                         suffix::
+                         template rcons< sentinel<Sentinel>...>::
+                         head::
+                         value;
 
 
         template< typename... Key_ >
-        using map_to_values  =  aml::list< at<Key_>... >;
+        using translate_keys  =  aml::list< lookup<Key_>... >;
 
 
     private:

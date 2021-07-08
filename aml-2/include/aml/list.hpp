@@ -116,8 +116,8 @@ namespace aml
         struct no_content;
 
         using relaxed_head  =  no_content;
-        using relaxed_tail  =  no_content;
-        using relaxed_init  =  no_content;
+        using relaxed_tail  =  list<>; //no_content;
+        using relaxed_init  =  list<>; //no_content;
         using relaxed_last  =  no_content;
 
 

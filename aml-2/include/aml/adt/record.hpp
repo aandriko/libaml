@@ -9,7 +9,7 @@
 
 
 #include "../dictionary.hpp"
-#include <functional>
+//#include <functional>
 
 #pragma once
 
@@ -143,17 +143,19 @@ namespace aml::adt
 
         template< typename F >
         decltype(auto) const_invoke(F&& f) const
-            noexcept( noexcept(std::invoke( std::declval<F>(), cref<typename Entry::key>()... ) ) )
+        //            noexcept( noexcept(std::invoke( std::declval<F>(), cref<typename Entry::key>()... ) ) )
+            noexcept( noexcept(f(cref<typename Entry::key>()... ) ) )
         {
-            return std::invoke( std::forward<F>(f), cref<typename Entry::key>()... );
+            return f( cref<typename Entry::key>()... );
         }
 
 
         template< typename F >
         decltype(auto) move_invoke(F&& f)  const
-            noexcept( noexcept(std::invoke( std::declval<F>(),  rref<typename Entry::key>()... ) ) )
+        //            noexcept( noexcept(std::invoke( std::declval<F>(),  rref<typename Entry::key>()... ) ) )
+            noexcept( noexcept(f(  rref<typename Entry::key>()... ) ) )
         {
-            return std::invoke( std::forward<F>(f), rref<typename Entry::key>()... );
+            return f( rref<typename Entry::key>()... );
         }
 
 

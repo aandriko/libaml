@@ -40,16 +40,10 @@ namespace aml::adt
         { }
 
 
-        constexpr
-        indexed_type (indexed_type const& other )  noexcept( noexcept( Type( other.type_) ) )
-        :    type_( other.type_ )
-        { }
+        constexpr indexed_type(indexed_type const & )              =  default;
 
+        constexpr indexed_type(indexed_type && )                   =  default;
 
-        constexpr
-        indexed_type( indexed_type&& other )  noexcept( noexcept( Type( static_cast< Type&& >( other.type_) ) ) )
-        :     type_( static_cast< Type&& >(other.type_) )
-        { }
 
         constexpr indexed_type& operator=( indexed_type const& )   =  default;
 
@@ -97,18 +91,16 @@ namespace aml::adt
         :  subtype<Entry>( static_cast< Args&& >(args)) ...
         { }
 
-        constexpr record() = default;
+
+        constexpr record()                          =  default;
 
         constexpr record( record const& )           =  default;
 
-        constexpr record( record && other)  = default;
-            /*
-            noexcept( (noexcept(subtype<Entry>(static_cast< subtype<Entry>&& >(other) ) ) && ... ) )
-        :    subtype<Entry>( static_cast<subtype<Entry> &&>(other) )...
-        { }
-            */
+        constexpr record( record && other)          =  default;
+
 
         constexpr record& operator=(record const&)  =  default;
+
         constexpr record& operator=(record&& )      =  default;
 
 
@@ -123,7 +115,10 @@ namespace aml::adt
 
 
         template< typename Key >
-        constexpr auto const& ref() const  noexcept { return cref<Key>(); }
+        constexpr auto const& ref() const  noexcept
+        {
+            return cref<Key>();
+        }
 
 
         template< typename Key >
@@ -172,36 +167,7 @@ namespace aml::adt
         friend constexpr bool operator!=( record<Entry...> const& lhs,
                                           record<Entry...> const& rhs )
         {
-            return ( (lhs.cref<typename Entry::key>() != rhs.cref<typename Entry::key>()) && ...  && (sizeof...(Entry) != 0 ) );
-        }
-
-
-        friend constexpr bool operator<=( record<Entry...> const& lhs,
-                                          record<Entry...> const& rhs )
-        {
-            return ( (lhs.cref<typename Entry::key>() <= rhs.cref<typename Entry::key>()) && ...  );
-        }
-
-
-
-        friend constexpr bool operator>=( record<Entry...> const& lhs,
-                                          record<Entry...> const& rhs )
-        {
-            return ( (lhs.cref<typename Entry::key>() >= rhs.cref<typename Entry::key>()) && ... );
-        }
-
-
-        friend constexpr bool operator<( record<Entry...> const& lhs,
-                                         record<Entry...> const& rhs )
-        {
-            return ( (lhs.cref<typename Entry::key>() < rhs.cref<typename Entry::key>()) && ... && (sizeof...(Entry) != 0) );
-        }
-
-
-        friend constexpr bool operator>( record<Entry...> const& lhs,
-                                         record<Entry...> const& rhs )
-        {
-            return ( (lhs.cref<typename Entry::key>() > rhs.cref<typename Entry::key>()) && ... && (sizeof...(Entry) != 0) );
+            return ( (lhs.cref<typename Entry::key>() != rhs.cref<typename Entry::key>()) || ...  );
         }
     };
 }

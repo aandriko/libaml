@@ -128,11 +128,8 @@ namespace test::record
             assert(x2 == x1 && x2 == x0 );
 
             assert( x0 == x1 );
-            assert( x0 <= x1 );
-            assert( x0 >= x1 );
             assert( !( x0 != x1) );
-            assert( ! (x0 < x1 ) );
-            assert( ! (x0 > x1 ) );
+
         }
 
         {
@@ -142,11 +139,6 @@ namespace test::record
             r1_t y1(2);
             assert( y1.ref<hello>() == 2 );
 
-
-            assert( y0 < y1 );
-            assert( y0 <= y1 );
-            assert( !(y0 > y1) );
-            assert( !(y0 >= y1) );
             assert( y0 != y1 );
             assert( y0 == y0 );
 
@@ -180,7 +172,8 @@ namespace test::record
 
             r3_a_t z2(std::move(z0));
 
-            //            assert(z2 != z0);
+
+            assert(z2 != z0);
             assert(! (z1 == z0) );
 
             assert(z2 == z2 && z1 == z1 && z0 == z0 );
@@ -192,17 +185,18 @@ namespace test::record
             r3_b_t w2;
             assert(w2 == r3_b_t("", nullptr) );
 
-            std::string s("hello");
-            std::string t(std::move(s));
+            w2 = std::move(w0);
+            r3_b_t w4{ std::move(w1) };
 
-            std::cout << s << ":: " << t << std::endl;
+            assert(w0 == r3_b_t("", nullptr));
+            assert(w1 == w0);
 
+            assert(  w4.cref<hello>() == "xyz" );
+            assert( *w4.cref<world>()  == -4.3 );
+
+            assert( w1 == r3_b_t("", nullptr) );
         }
 
-
-        aml::adt::record< aml::entry<hello, double*>, aml::entry<world, std::string> > r( nullptr, "hello");
-
-        std::cout << r.cref<world>() << std::endl;
     }
 }
 

@@ -23,10 +23,14 @@
 
 namespace test::linker
 {
-    struct hello;
+    struct hello {};
     void test_dummy()
     {
-        aml::adt::link< aml::adt::subtype<hello, std::vector> >::adt<int> adt;
+        aml::adt::link< aml::adt::subtype<hello, std::vector> >::adt<int> adt_1;
+        aml::adt::link< aml::adt::subtype<hello, std::vector> >::adt<int> adt_2( aml::adt::sub<hello>( 4 ) );
+
+        int x;
+        static_cast<void>(x); // breakpoint for gdb
     }
 }
 

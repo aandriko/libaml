@@ -15,19 +15,41 @@
 
 #include <type_traits>
 
+
 namespace aml::adt
 {
     template<  typename Symbol
             ,  template<typename... > class SubType
             >
-    using subtype  =   aml::entry<Symbol, aml::function<SubType> >;
+    using subtype  =  aml::entry<Symbol, aml::function<SubType> >;
 
 
-    template<typename X, typename... Args>
-    inline constexpr indexed_type<X, record<Args&&... > > arg(Args&&... args)
+    template<  typename    Symbol
+            ,  typename... Args >
+    auto sub(Args&&... args)
     {
-        return indexed_type<X, record< aml::entry<Args, Args&&>... > >( static_cast<Args&&>(args)... );
+        auto construct  =  [&args...] (auto&&  constructor)
+                           {
+                               return constructor( static_cast<Args&&>(args)... );
+                           };
+
+
+        using return_t  =  indexed_type< Symbol, decltype(construct) >;
+
+        return return_t( static_cast<  decltype(construct) &&  >(construct) );
     }
+
+
+    template<typename... Indexed_Type>
+    auto make_record( Indexed_Type&&... field)
+    {
+        using record_t  =  record<  typename term<std::decay_t<Indexed_Type>>::
+                                    subterms::
+                                    template apply< entry >...  >;
+
+        return record_t( field.rref()... );
+    }
+
 
     template<typename... SubType>
     struct link
@@ -45,31 +67,36 @@ namespace aml::adt
 
         template< typename... X >
         class adt
+        :
+            public SubType::value::template apply_to< X... >...
         {
         private:
             using this_type  =  adt< X... >;
 
-            using data_t  =  record<  aml::entry<  typename SubType::key
-                                                ,  typename SubType::value::template apply_to<X...>
-                                                >...
-                                   >;
+
+            template< typename SubType_ >
+            using symbol  =  typename SubType_::key;
+
+            template< typename SubType_ >
+            using instance  =  typename SubType_::value::template apply_to<X...>;
+
+
+            using data_t  =  record<  aml::entry<  symbol< SubType >
+                                                ,  instance< SubType >  >...  >;
 
 
             data_t data_;
 
 
-            struct construct_from_record {};
-
+            struct internal_ {};
 
             template<typename Record>
-            adt( construct_from_record, Record&& r)
-            //            :
-                //                data_t( r.template rref< typename SubType::key >()... )
+            adt( internal_, Record&& r)
+            :   instance<SubType>(    (r.template rref<symbol<SubType> >()) (   [](auto&&... z ) {  return instance<SubType>(static_cast< decltype(z)&& >(z)... ); }  ) )...
             { }
 
-
             template<typename T>
-            using make_entry = typename aml::term<std::decay_t<T> >::subterms::template apply<aml::entry>;
+            using make_entry =  typename aml::term<std::decay_t<T> >::subterms::template apply<aml::entry>;
 
         public:
 
@@ -81,12 +108,11 @@ namespace aml::adt
                                         ,  is_same<  list< Args... >, list< this_type && > >
                                         >::sfinae
                 >
-
             adt( Args&&... args )
-            :    adt( construct_from_record{},
-                      record<  make_entry<Args>... >(static_cast< Args && >(args)... ))
+            :    adt( internal_{},  make_record( static_cast<Args&&>(args)... ) )
             { }
 
+            adt()              =  default;
 
             adt( adt const& )  =  default;
             adt( adt &&     )  =  default;

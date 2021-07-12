@@ -27,6 +27,8 @@ namespace aml::adt
 
     public:
 
+        using type = Type;
+
         template<  typename... Args
                 ,  typename  =  typename  // exclude copy and move construction
                                 none<  is_same<  list< Args... >, list< this_type const & >  >

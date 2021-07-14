@@ -44,6 +44,44 @@ namespace test::linker
 
 
     struct hello {};
+
+
+    template<typename... T>
+    struct keeper;
+
+    template<typename T>
+    struct keeper<T>
+    {
+        T data_;
+
+        template<typename T_>
+        explicit keeper(T_&& t) : data_(std::forward<T_>(t)) { }
+
+        keeper(keeper const& other)
+            : data_(other.data_)
+        { }
+
+        keeper(keeper && other)
+            : data_(std::move(other.data_))
+        { }
+    };
+
+
+    /*
+
+//      This function does not compile: Indication of bug that cannot be found easily with std::vector
+//      in test_dummy, where the compilation seemingly succeeds.
+
+    void test_dummy_boom()
+    {
+        using adt = aml::adt::link< aml::adt::subtype<hello, keeper> >::adt<int>;
+        adt x( aml::adt::type<hello>(-2) );
+        std::cout << x[hello()].data_ << std::endl;
+    }
+
+    */
+
+
     void test_dummy()
     {
         using adt_1_t = aml::adt::link< aml::adt::subtype<hello, std::vector> >::adt<int>;

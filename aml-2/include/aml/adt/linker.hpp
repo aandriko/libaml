@@ -82,7 +82,11 @@ namespace aml::adt
 
 
             struct internal_ {};
+            struct internal_unpermuted_{};
 
+            //            template<typename... Args>
+            //  adt(internal_inpermuted, Args&&...
+            
             template<typename Record>
             adt( internal_, Record r)
             :   instance<SubType>(    r.template rref<symbol<SubType> >() // indexed_type

@@ -9,6 +9,7 @@
 
 
 #include "aml/adt/linker.hpp"
+#include "aml/string.hpp"
 
 #include <type_traits>
 
@@ -21,17 +22,51 @@
 #include <cassert>
 #include <vector>
 
+
 namespace test::linker
 {
+    template<typename... X >
+    using vec = std::vector< typename aml::list<X...>::head>;
+
+    template<typename... X>
+    using sptr = std::shared_ptr< typename aml::list<X...>::tail::head >;
+
+    template<typename... X>
+    using uptr = std::unique_ptr< typename aml::list<X...>::tail::head >;
+
+    using aml::operator ""_;
+
+
+    template<typename X, typename Y>
+    using adt_2_t = typename aml::adt::link< aml::adt::subtype< decltype("vector"_), vec >
+                                           , aml::adt::subtype< decltype("pointer"_), sptr >
+                                           >::template adt<X, Y>;
+
+
     struct hello {};
     void test_dummy()
     {
-        aml::adt::link< aml::adt::subtype<hello, std::vector> >::adt<int> adt_1;
-        aml::adt::link< aml::adt::subtype<hello, std::vector> >::adt<int> adt_2( aml::adt::sub<hello>( 4 ) );
+        using adt_1_t = aml::adt::link< aml::adt::subtype<hello, std::vector> >::adt<int>;
 
-        int x;
-        static_cast<void>(x); // breakpoint for gdb
+        adt_1_t adt_1;
+
+        std::vector<int> const v_ {-11, -22, -33 };
+        
+        adt_2_t<int, double> adt_2( aml::adt::type<decltype("pointer"_)>( new double(4.3) )
+                                  , aml::adt::type<decltype("vector"_)>(v_) );
+                                    //                                    aml::adt::type<decltype("vector"_)>( std::vector<int>{-2, -4} ));
+
+
+        std::cout << "vector: " << std::endl;
+        auto const& v =  adt_2["vector"_];
+        for (auto const& el : v)
+        {
+            std::cout << el << " : " << std::endl;
+        }
+
     }
+
+    
 }
 
 

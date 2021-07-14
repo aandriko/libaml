@@ -24,22 +24,6 @@ namespace aml::adt
     using subtype  =  aml::entry<Symbol, aml::function<SubType> >;
 
 
-    template<  typename    Symbol
-            ,  typename... Args >
-    auto sub(Args&&... args)
-    {
-        auto construct  =  [&args...] (auto&&  constructor)
-                           {
-                               return constructor( static_cast<Args&&>(args)... );
-                           };
-
-
-        using return_t  =  indexed_type< Symbol, decltype(construct) >;
-
-        return return_t( static_cast<  decltype(construct) &&  >(construct) );
-    }
-
-
     template<typename... Indexed_Type>
     auto make_record( Indexed_Type&&... field)
     {
@@ -48,6 +32,15 @@ namespace aml::adt
                                     template apply< entry >...  >;
 
         return record_t( field.rref()... );
+    }
+
+
+    template<  typename    Symbol
+            ,  typename... Args >
+    auto type(Args&&... args)
+    {
+        using return_t  =  indexed_type<  Symbol, aml::adt::record< aml::entry< Args&&, Args&& >... >  >;
+        return return_t(static_cast<Args&&>(args)...);
     }
 
 
@@ -91,14 +84,24 @@ namespace aml::adt
             struct internal_ {};
 
             template<typename Record>
-            adt( internal_, Record&& r)
-            :   instance<SubType>(    (r.template rref<symbol<SubType> >()) (   [](auto&&... z ) {  return instance<SubType>(static_cast< decltype(z)&& >(z)... ); }  ) )...
+            adt( internal_, Record r)
+            :   instance<SubType>(    r.template rref<symbol<SubType> >() // indexed_type
+                                       .move_invoke(  [](auto&&... x)
+                                                      {
+                                                          using instance_t = instance<SubType>;
+
+                                                          auto ret_val  =   instance_t( static_cast<decltype(x)&&>(x)... );
+
+                                                          return ret_val;
+                                                      }  )    )...
+                                      //(   [](auto&&... z ) {  return instance<SubType>(static_cast< decltype(z)&& >(z)... ); }  ) )...
             { }
 
             template<typename T>
             using make_entry =  typename aml::term<std::decay_t<T> >::subterms::template apply<aml::entry>;
 
         public:
+            using linker  =  link< SubType... >;
 
 
             template<  typename... Args
@@ -116,6 +119,31 @@ namespace aml::adt
 
             adt( adt const& )  =  default;
             adt( adt &&     )  =  default;
+
+
+            template<typename S>
+            auto const&  operator[](const S&) const&
+            {
+             return data_.template cref< std::decay_t<S> >();
+             //                return static_cast< instance<std::decay_t<S> > const& >(*this);
+            }
+
+
+            template<typename S>
+            auto& operator[](const S&) &
+            {
+             return data_.template ref< std::decay_t<S> >();
+             //                return static_cast< instance<std::decay_t<S> >& >(*this);
+            }
+
+
+            template< typename S >
+            auto&& operator[](S const&) &&
+            {
+             return data_.template rref< std::decay_t<S> >();
+             //                return static_cast< instance< std::decay_t<S> >&& >(*this);
+            }
+
         };
 
 

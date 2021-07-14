@@ -42,9 +42,13 @@ namespace aml::adt
         { }
 
 
-        constexpr indexed_type(indexed_type const & )              =  default;
+        constexpr indexed_type(indexed_type const &  other )
+        :    type_(other.type_)
+        {  }
 
-        constexpr indexed_type(indexed_type && )                   =  default;
+        constexpr indexed_type(indexed_type &&  other )
+        :    type_(static_cast<Type&&>(other.type_))
+        { }
 
 
         constexpr indexed_type& operator=( indexed_type const& )   =  default;
@@ -153,11 +157,11 @@ namespace aml::adt
 
 
         template< typename F >
-        decltype(auto) move_invoke(F&& f)  const
-        //            noexcept( noexcept(std::invoke( std::declval<F>(),  rref<typename Entry::key>()... ) ) )
-            noexcept( noexcept(f(  rref<typename Entry::key>()... ) ) )
+        auto move_invoke(F&& f)
+        //            noexcept( noexcept(f(  rref<typename Entry::key>()... ) ) )
         {
-            return f( rref<typename Entry::key>()... );
+            //            return f( rref<typename Entry::key>()... );
+            return  f( static_cast< subtype<Entry>& >(*this).rref()... );
         }
 
 

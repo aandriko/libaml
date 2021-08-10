@@ -14,7 +14,8 @@
 #include "./record.hpp"
 
 #include <type_traits>
-
+#include <boost/core/demangle.hpp>
+#include <iostream>
 
 namespace aml::adt
 {
@@ -22,26 +23,6 @@ namespace aml::adt
             ,  template<typename... > class SubType
             >
     using subtype  =  aml::entry<Symbol, aml::function<SubType> >;
-
-
-    template<typename... Indexed_Type>
-    auto make_record( Indexed_Type&&... field)
-    {
-        using record_t  =  record<  typename term<std::decay_t<Indexed_Type>>::
-                                    subterms::
-                                    template apply< entry >...  >;
-
-        return record_t( field.rref()... );
-    }
-
-
-    template<  typename    Symbol
-            ,  typename... Args >
-    auto type(Args&&... args)
-    {
-        using return_t  =  indexed_type<  Symbol, aml::adt::record< aml::entry< Args&&, Args&& >... >  >;
-        return return_t(static_cast<Args&&>(args)...);
-    }
 
 
     template<typename... SubType>
@@ -54,6 +35,7 @@ namespace aml::adt
         static_assert(lookup::size() == sizeof...(SubType),
                       "Symbols for sub types must be unique!");
 
+        using this_linker     =  link<SubType...>;
 
     public:
 
@@ -61,7 +43,7 @@ namespace aml::adt
         template< typename... X >
         class adt
         :
-            public SubType::value::template apply_to< X... >...
+            public SubType::value::template apply_to< this_linker, X... >...
         {
         private:
             using this_type  =  adt< X... >;
@@ -70,42 +52,23 @@ namespace aml::adt
             template< typename SubType_ >
             using symbol  =  typename SubType_::key;
 
+
             template< typename SubType_ >
-            using instance  =  typename SubType_::value::template apply_to<X...>;
+            using instance  =  typename SubType_::value::template apply_to< this_linker, X...>;
 
 
-            using data_t  =  record<  aml::entry<  symbol< SubType >
-                                                ,  instance< SubType >  >...  >;
+            template< typename SubType_ >
+            using entry  =  aml::entry<  symbol< SubType_>,  instance< SubType_ > >;
+
+
+            using data_t  =  record< entry<SubType>... >;
 
 
             data_t data_;
 
 
-            struct internal_ {};
-            struct internal_unpermuted_{};
-
-            //            template<typename... Args>
-            //  adt(internal_inpermuted, Args&&...
-            
-            template<typename Record>
-            adt( internal_, Record r)
-            :   instance<SubType>(    r.template rref<symbol<SubType> >() // indexed_type
-                                       .move_invoke(  [](auto&&... x)
-                                                      {
-                                                          using instance_t = instance<SubType>;
-
-                                                          auto ret_val  =   instance_t( static_cast<decltype(x)&&>(x)... );
-
-                                                          return ret_val;
-                                                      }  )    )...
-                                      //(   [](auto&&... z ) {  return instance<SubType>(static_cast< decltype(z)&& >(z)... ); }  ) )...
-            { }
-
-            template<typename T>
-            using make_entry =  typename aml::term<std::decay_t<T> >::subterms::template apply<aml::entry>;
-
         public:
-            using linker  =  link< SubType... >;
+            using signature  =  lookup;
 
 
             template<  typename... Args
@@ -115,37 +78,78 @@ namespace aml::adt
                                         ,  is_same<  list< Args... >, list< this_type && > >
                                         >::sfinae
                 >
-            adt( Args&&... args )
-            :    adt( internal_{},  make_record( static_cast<Args&&>(args)... ) )
+            explicit adt( Args&&... args )
+            :   instance<SubType>(static_cast<Args&&>(args))...
+            {}
+
+
+            adt()
+            :   instance<SubType>()...
             { }
 
-            adt()              =  default;
 
-            adt( adt const& )  =  default;
-            adt( adt &&     )  =  default;
+            adt( adt const &  other)
+            :   instance<SubType>( static_cast< instance<SubType> const & >(other))...
+            { }
+
+            adt( adt &&  other)
+            :   instance<SubType>(static_cast< instance<SubType>&& >(other))...
+            { }
 
 
-            template<typename S>
-            auto const&  operator[](const S&) const&
+            template< typename S >
+            auto const&  operator[](const S&)  const &
             {
-             return data_.template cref< std::decay_t<S> >();
-             //                return static_cast< instance<std::decay_t<S> > const& >(*this);
-            }
-
-
-            template<typename S>
-            auto& operator[](const S&) &
-            {
-             return data_.template ref< std::decay_t<S> >();
-             //                return static_cast< instance<std::decay_t<S> >& >(*this);
+                return data_.template cref< std::decay_t<S> >();
             }
 
 
             template< typename S >
-            auto&& operator[](S const&) &&
+            auto& operator[](const S&)  &
             {
-             return data_.template rref< std::decay_t<S> >();
-             //                return static_cast< instance< std::decay_t<S> >&& >(*this);
+                return data_.template ref< std::decay_t<S> >();
+            }
+
+
+            template< typename S >
+            auto&& operator[](S const&)  &&
+            {
+                return data_.template rref< std::decay_t<S> >();
+            }
+
+
+            template< typename T >
+            auto const& cref()  const &
+            {
+                return data_.template cref< std::decay_t<T> >();
+            }
+
+
+            template< typename T >
+            auto const& ref()  const &
+            {
+                return cref<T>();
+            }
+
+
+            template< typename T >
+            auto& ref()  &
+            {
+                return ref<T>();
+            }
+
+
+            template< typename T >
+            auto&& rref()
+            {
+                return data_.template rref< std::decay_t<T> >();
+            }
+
+
+            template< typename T >
+            auto&& ref() &&
+            {
+                return data_.template rref< std::decay_t<T> >();
             }
 
         };

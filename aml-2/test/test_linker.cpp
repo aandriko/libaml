@@ -9,7 +9,7 @@
 
 
 #include "aml/adt/linker.hpp"
-#include "aml/string.hpp"
+
 
 #include <type_traits>
 
@@ -21,90 +21,61 @@
 
 #include <cassert>
 #include <vector>
+#include <tuple>
 
 
-namespace test::linker
+namespace test::function_argument
 {
-    template<typename... X >
-    using vec = std::vector< typename aml::list<X...>::head>;
-
-    template<typename... X>
-    using sptr = std::shared_ptr< typename aml::list<X...>::tail::head >;
-
-    template<typename... X>
-    using uptr = std::unique_ptr< typename aml::list<X...>::tail::head >;
-
-    using aml::operator ""_;
+    template<auto n> struct foo {};
 
 
-    template<typename X, typename Y>
-    using adt_2_t = typename aml::adt::link< aml::adt::subtype< decltype("vector"_), vec >
-                                           , aml::adt::subtype< decltype("pointer"_), sptr >
-                                           >::template adt<X, Y>;
 
-
-    struct hello {};
-
-
-    template<typename... T>
-    struct keeper;
-
-    template<typename T>
-    struct keeper<T>
+    template<typename Linker, typename Value>
+    struct Vector : public std::vector<Value>
     {
-        T data_;
-
-        template<typename T_>
-        explicit keeper(T_&& t) : data_(std::forward<T_>(t)) { }
-
-        keeper(keeper const& other)
-            : data_(other.data_)
+        Vector(std::initializer_list<double> l )
+            :    std::vector<double>(l)
         { }
 
-        keeper(keeper && other)
-            : data_(std::move(other.data_))
-        { }
+
+        Vector(Vector const& other)
+            :    std::vector<double>(other)
+        {
+            std::cout << "copy constructing! " << std::endl;
+        }
+
+
+        Vector(Vector && other)
+            :    std::vector<double>(std::move(other))
+        {
+            std::cout << "move constructing! " << std::endl;
+        }
+
     };
 
+    struct t1 { t1() = default; };
+    struct t2 { t2() = default; };
 
-    /*
-
-//      This function does not compile: Indication of bug that cannot be found easily with std::vector
-//      in test_dummy, where the compilation seemingly succeeds.
-
-    void test_dummy_boom()
-    {
-        using adt = aml::adt::link< aml::adt::subtype<hello, keeper> >::adt<int>;
-        adt x( aml::adt::type<hello>(-2) );
-        std::cout << x[hello()].data_ << std::endl;
-    }
-
-    */
-
+    template<typename... X>
+    using adt  =  aml::adt::link<  aml::adt::subtype<t1, Vector>
+                                ,  aml::adt::subtype<t2, Vector > >::adt<double>;
 
     void test_dummy()
     {
-        using adt_1_t = aml::adt::link< aml::adt::subtype<hello, std::vector> >::adt<int>;
+        //        adt<double> x1;
+        // adt<double> x2( Vector<double>{1.1, -2.2 }, Vector<double>{-3.7});
 
-        adt_1_t adt_1;
+        /*  
+        auto const& ww = x2.data_;
+        std::vector<double> const& w = x2.data_.cref<t1>();
+  
+        for (auto const& el : w )
+            std::cout << el << " : " ;
+        std::cout << std::endl;
 
-        std::vector<int> const v_ {-11, -22, -33 };
-        
-        adt_2_t<int, double> adt_2( aml::adt::type<decltype("pointer"_)>( new double(4.3) )
-                                  , aml::adt::type<decltype("vector"_)>(v_) );
-                                    //                                    aml::adt::type<decltype("vector"_)>( std::vector<int>{-2, -4} ));
-
-
-        std::cout << "vector: " << std::endl;
-        auto const& v =  adt_2["vector"_];
-        for (auto const& el : v)
-        {
-            std::cout << el << " : " << std::endl;
-        }
-
+        std::cout << boost::core::demangle( typeid(adt<double>::data_t).name() ) << std::endl;
+        */
     }
-
-    
 }
 
 
@@ -116,7 +87,7 @@ int main()
 {
     void (*test_set[])() =
     {
-        test::linker::test_dummy,
+        test::function_argument::test_dummy,
     };
 
 

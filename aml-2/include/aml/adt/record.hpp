@@ -7,11 +7,11 @@
 // (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 /////////////////////////////////////////////////////////////////////////////////////////////
 
+#pragma once
+
 
 #include "../dictionary.hpp"
-//#include <functional>
 
-#pragma once
 
 namespace aml::adt
 {
@@ -148,8 +148,7 @@ namespace aml::adt
 
 
         template< typename F >
-        decltype(auto) const_invoke(F&& f) const
-        //            noexcept( noexcept(std::invoke( std::declval<F>(), cref<typename Entry::key>()... ) ) )
+        auto const_invoke(F&& f) const
             noexcept( noexcept(f(cref<typename Entry::key>()... ) ) )
         {
             return f( cref<typename Entry::key>()... );
@@ -158,10 +157,10 @@ namespace aml::adt
 
         template< typename F >
         auto move_invoke(F&& f)
-        //            noexcept( noexcept(f(  rref<typename Entry::key>()... ) ) )
+            noexcept( noexcept(f(rref<typename Entry::key>()... ) ) )
         {
-            //            return f( rref<typename Entry::key>()... );
-            return  f( static_cast< subtype<Entry>& >(*this).rref()... );
+            return f( rref<typename Entry::key>()... );
+            //return  f( static_cast< subtype<Entry>& >(*this).rref()... );
         }
 
 

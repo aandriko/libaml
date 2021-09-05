@@ -15,6 +15,11 @@
 
 namespace aml::adt
 {
+    // indexed_type<Index, Type> is a wrapper that keeps an object of the type Type
+    //
+    // The kept object can be accessed by reference through the methods ref(), cref() and
+    // rref()
+    //
     template<  typename Index
             ,  typename Type
             >
@@ -42,16 +47,24 @@ namespace aml::adt
         { }
 
 
-        constexpr indexed_type(indexed_type const &  other )
-        :    type_(other.type_)
-        {  }
+        indexed_type(indexed_type const&) = default;
 
-        constexpr indexed_type(indexed_type &&  other )
-        :    type_(static_cast<Type&&>(other.type_))
+        indexed_type(indexed_type &&) = default;
+
+        template< typename Type_ >
+        constexpr indexed_type(indexed_type<Index, Type_> const &  other )  noexcept( noexcept( Type( other.cref() ) ) )
+        :  type_( other.cref() )
+        { }
+
+
+        template< typename Type_ >
+        constexpr indexed_type(indexed_type<Index, Type_>&&  other )  noexcept( noexcept( Type( other.rref() ) ) )
+        :  type_( other.rref() )
         { }
 
 
         constexpr indexed_type& operator=( indexed_type const& )   =  default;
+
 
         constexpr indexed_type& operator=( indexed_type&&  other)  =  default;
 
@@ -60,9 +73,40 @@ namespace aml::adt
         Type const &  ref()  const  noexcept  { return cref(); }
         Type &        ref()         noexcept  { return type_; }
         Type &&       rref()        noexcept  { return static_cast<Type &&>(type_); }
+
+        friend bool operator==(indexed_type const& lhs, indexed_type const& rhs)
+        {
+            return lhs.cref() == rhs.cref();
+        }
+
+        friend bool operator!=(indexed_type const& lhs, indexed_type const& rhs)
+        {
+            return !(lhs == rhs);
+        }
+
     };
 
 
+    // aml::entry< K, V > is a key-value-pair, defined in dictionary.hpp.
+    // (Objects of this types are not needed)
+    //
+    // record<  entry< K1, V1 >,  entry< K2, V2>,  ... > is a  metaprogrammable
+    // verion of a C-struct.
+    //
+    // By metaproprogrammable we mean that the parameters K1, K2..., V1, V2... ,
+    // which spacify the names and the types of elements can be modified and queried
+    // in a metaprogramming context.
+    //
+    //
+    // It is guaranteed that a record r of tye type
+    // record<  entry< K1, V1 >,  entry< K2, V2>,  ... > has the same memory-layout as
+    // a C-struct
+    //                struct r_ { V1 K1_; V2 K2_; .... }.
+    //
+    // Here K1_ is a variable name, which is used to refer to a memory location in r_,
+    // whereas K1 is a type that corresponds to the corresponding memory location in r.
+    // The same olds for K2_ versus K2 etc...
+    //
     template<  typename... Entry  >
     struct record
     :    private indexed_type< typename Entry::key, typename Entry::value>...
@@ -70,6 +114,9 @@ namespace aml::adt
     private:
         using lookup_table  =  dictionary<Entry...>;
 
+        // The assertion enforces an error if two entries have the same
+        // key, as then lookup_table will not exist, and hence the call of
+        // lookup_table::size() wil result in a compilation error.
         static_assert( lookup_table::size() == sizeof...(Entry) );
 
         template<typename Entry_>
@@ -103,6 +150,18 @@ namespace aml::adt
         constexpr record( record const& )           =  default;
 
         constexpr record( record && other)          =  default;
+
+        template< typename... Entry_ >
+        constexpr record( record<Entry_...> const& other )
+        // noexcept specification missing
+        :    subtype<Entry> (other.template cref< typename Entry::key >() )...
+        { }
+
+        template< typename... Entry_ >
+        constexpr record( record<Entry_...>&& other )
+        // noexcept specification missing
+        :    subtype<Entry> (other.template rref< typename Entry::key >() )...
+        { }
 
 
         constexpr record& operator=(record const&)  =  default;
@@ -147,6 +206,8 @@ namespace aml::adt
         }
 
 
+        // Take const references to all items in ascending order as
+        // function arguments and evaluate
         template< typename F >
         auto const_invoke(F&& f) const
             noexcept( noexcept(f(cref<typename Entry::key>()... ) ) )
@@ -155,6 +216,8 @@ namespace aml::adt
         }
 
 
+        // Take rvalue references to all items in ascending order as
+        // function arguments and evaluate
         template< typename F >
         auto move_invoke(F&& f)
             noexcept( noexcept(f(rref<typename Entry::key>()... ) ) )
@@ -167,14 +230,19 @@ namespace aml::adt
         friend constexpr bool operator==( record<Entry...> const& lhs,
                                           record<Entry...> const& rhs )
         {
-            return ( (lhs.cref<typename Entry::key>() == rhs.cref<typename Entry::key>()) && ... );
+            return  ( (  static_cast< indexed_type< typename Entry::key, typename Entry::value> const&>(lhs)
+                         ==
+                         static_cast< indexed_type< typename Entry::key, typename Entry::value> const&>(rhs)
+                      ) && ... );
+            //            return ( (lhs.cref<typename Entry::key>() == rhs.cref<typename Entry::key>()) && ... );
         }
 
 
         friend constexpr bool operator!=( record<Entry...> const& lhs,
                                           record<Entry...> const& rhs )
         {
-            return ( (lhs.cref<typename Entry::key>() != rhs.cref<typename Entry::key>()) || ...  );
+            return ! (lhs == rhs);
+            //            return ( (lhs.cref<typename Entry::key>() != rhs.cref<typename Entry::key>()) || ...  );
         }
     };
 }

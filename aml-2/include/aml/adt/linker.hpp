@@ -26,6 +26,55 @@ namespace aml::adt
 
 
     template<typename... SubType>
+    struct signature
+    {
+    private:
+
+
+        template<typename... X>
+        struct linker
+        {
+            template<typename Symbol>
+            using lookup  =  typename dictionary<SubType>::
+                             template lookup<Symbol>::
+                             template apply_to<  linker<X...>,  X... >;
+
+            template<typename Symbol>
+            using entry = aml::entry< Symbol, lookup<Symbol> >;
+        };
+
+
+    public:
+
+        template<typename... X>
+        struct adt
+        :    public record< typename linker<X...>::template entry< typename SubType::key >... >
+        {
+        private:
+            using record_t  =  record<  typename linker<X...>::
+                                        template entry< typename SubType::key >...  >;
+
+        public:
+
+            using signature  =  adt::signature<SubType...>;
+
+            template<typename Symbol>
+            using sub  =  typename linker<X...>::template lookup<Symbol>;
+
+            adt()            =  default;
+            adt(adt const&)  =  default;
+            adt(adt&& )      =  default;
+
+
+            template<typename... SubAdt>
+            adt(SubAdt&&... sub_adt)
+                :  record_t( get_param_< typename SubType::key >(sub_adt...)... )
+            { }
+        };
+
+    }
+    
+    template<typename... SubType>
     struct link
     {
     private:
@@ -40,6 +89,8 @@ namespace aml::adt
     public:
 
 
+
+        
         template< typename... X >
         class adt
         :
@@ -69,6 +120,10 @@ namespace aml::adt
 
         public:
             using signature  =  lookup;
+
+
+            template<typename Symbol>
+            using factor  =  typename signature::template lookup<Symbol>::template apply_to<this_linker, X...>;
 
 
             template<  typename... Args

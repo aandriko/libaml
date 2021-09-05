@@ -8,6 +8,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 
+/*
 #include "aml/adt/linker.hpp"
 
 
@@ -63,18 +64,19 @@ namespace test::function_argument
     void test_dummy()
     {
         //        adt<double> x1;
-        // adt<double> x2( Vector<double>{1.1, -2.2 }, Vector<double>{-3.7});
+        //        adt<double> x2( Vector<double>{1.1, -2.2 }, Vector<double>{-3.7});
+        adt<double> x2( adt<double>::factor<t1>{1.1, -2.2 }, adt<double>::factor<t2>{-3.7});
 
-        /*  
-        auto const& ww = x2.data_;
-        std::vector<double> const& w = x2.data_.cref<t1>();
+
+        //        auto const& ww = x2.data_;
+        //        std::vector<double> const& w = x2.data_.cref<t1>();
   
-        for (auto const& el : w )
-            std::cout << el << " : " ;
-        std::cout << std::endl;
+        //        for (auto const& el : w )
+            //            std::cout << el << " : " ;
+        //        std::cout << std::endl;
 
-        std::cout << boost::core::demangle( typeid(adt<double>::data_t).name() ) << std::endl;
-        */
+        //        std::cout << boost::core::demangle( typeid(adt<double>::data_t).name() ) << std::endl;
+
     }
 }
 
@@ -97,3 +99,7 @@ int main()
     std::cout << __FILE__ << ": " << sizeof(test_set)/sizeof(test_set[0])  << " tests passed." << std::endl;
 
 }
+*/
+
+
+int main() { } 

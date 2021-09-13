@@ -11,6 +11,7 @@
 
 
 #include "../dictionary.hpp"
+#include "../term_algebra.hpp"
 
 
 namespace aml::adt
@@ -124,6 +125,29 @@ namespace aml::adt
 
         using this_type = record< Entry... >;
 
+
+        template<typename Adt>
+        struct fix_adt
+        {
+            template<typename... Args>
+            struct construct
+            {
+                static constexpr Adt from_record_cref( record<Entry...> const& r)
+                {
+                    return Adt( r.cref< typename Args::key >()... );
+                }
+
+
+                static constexpr Adt from_record_rref( record<Entry...> && r )
+                {
+                    static_assert( set<>::template add_elements< typename Args::key... >::size() == sizeof...(Args),
+                                   "No double keys are admissible in a construction from an rval." );
+
+                    return Adt( r.rref< typename Args::key >()... );
+                }
+            };
+        };
+
     public:
 
         template< template<typename... > class Less >
@@ -140,8 +164,8 @@ namespace aml::adt
                                     >::sfinae
                 >
         explicit constexpr record( Args&&... args )
-            noexcept( (noexcept(subtype<Entry>(static_cast< Args&& >(args) ) ) && ... ) )
-        :  subtype<Entry>( static_cast< Args&& >(args)) ...
+            //            noexcept( (noexcept(subtype<Entry>(static_cast< Args&& >(args) ) ) && ... ) )
+        :    subtype<Entry>( static_cast< Args&& >(args)) ...
         { }
 
 
@@ -149,22 +173,37 @@ namespace aml::adt
 
         constexpr record( record const& )           =  default;
 
-        constexpr record( record && other)          =  default;
+        constexpr record( record && other )         =  default;
 
-        template< typename... Entry_ >
-        constexpr record( record<Entry_...> const& other )
-        // noexcept specification missing
-        :    subtype<Entry> (other.template cref< typename Entry::key >() )...
-        { }
 
-        template< typename... Entry_ >
-        constexpr record( record<Entry_...>&& other )
-        // noexcept specification missing
-        :    subtype<Entry> (other.template rref< typename Entry::key >() )...
-        { }
+        template<typename Adt>
+        constexpr Adt extract() const &    noexcept( noexcept( term<Adt>::
+                                                               subterms::
+                                                               template apply< fix_adt<Adt>::
+                                                               template construct >::
+                                                               from_record_cref(*this) ) )
+        {
+            using construct_adt = typename term<Adt>::subterms::template apply< fix_adt<Adt>::template construct >;
+
+            return construct_adt::from_record_cref(*this);
+        }
+
+
+        template<typename Adt>
+        constexpr Adt extract() &&    noexcept( noexcept( term<Adt>::
+                                                          subterms::
+                                                          template apply< fix_adt<Adt>::
+                                                          template construct >::
+                                                          from_record_rref(*this) ) )
+        {
+            using construct_adt = typename term<Adt>::subterms::template apply< fix_adt<Adt>::template construct >;
+
+            return construct_adt::from_record_rref(*this);
+        }
 
 
         constexpr record& operator=(record const&)  =  default;
+
 
         constexpr record& operator=(record&& )      =  default;
 
@@ -173,9 +212,26 @@ namespace aml::adt
         constexpr auto const& cref() const  noexcept
         {
             using value_t   =  typename lookup_table::template lookup< Key >;
-            using return_t  =  subtype<  entry< Key, value_t >  > const &;
+            using return_t  =  subtype<  aml::entry< Key, value_t >  > const &;
 
             return static_cast< return_t >(*this).cref();
+        }
+
+
+        template< typename... Entry_ >
+        constexpr record<Entry...>& operator=( record<Entry_...> const& other )
+        // noexcept specification missing
+        {
+            *this = record<Entry...>(other);
+            return *this;
+        }
+
+
+        template< typename... Entry_ >
+        constexpr record<Entry...>& operator=( record<Entry_...>&& other )
+        {
+            *this = record<Entry...>( static_cast<record<Entry_...>&&>(other) );
+            return *this;
         }
 
 
@@ -190,7 +246,7 @@ namespace aml::adt
         constexpr auto& ref()  noexcept
         {
             using value_t  =  typename lookup_table::template lookup< Key >;
-            using return_t = subtype<  entry< Key, value_t >  > &;
+            using return_t = subtype<  aml::entry< Key, value_t >  > &;
 
             return static_cast< return_t >(*this).ref();
         }
@@ -200,7 +256,7 @@ namespace aml::adt
         constexpr auto&& rref()  noexcept
         {
             using value_t  =  typename lookup_table::template lookup< Key >;
-            using return_t =  subtype<  entry< Key, value_t >  > &&;
+            using return_t =  subtype<  aml::entry< Key, value_t >  > &&;
 
             return static_cast< return_t >(*this).rref();
         }
@@ -209,8 +265,8 @@ namespace aml::adt
         // Take const references to all items in ascending order as
         // function arguments and evaluate
         template< typename F >
-        auto const_invoke(F&& f) const
-            noexcept( noexcept(f(cref<typename Entry::key>()... ) ) )
+        auto invoke(F&& f) const &
+        noexcept( noexcept(f(cref<typename Entry::key>()... ) ) )
         {
             return f( cref<typename Entry::key>()... );
         }
@@ -219,11 +275,10 @@ namespace aml::adt
         // Take rvalue references to all items in ascending order as
         // function arguments and evaluate
         template< typename F >
-        auto move_invoke(F&& f)
+        auto invoke(F&& f)  &&
             noexcept( noexcept(f(rref<typename Entry::key>()... ) ) )
         {
             return f( rref<typename Entry::key>()... );
-            //return  f( static_cast< subtype<Entry>& >(*this).rref()... );
         }
 
 

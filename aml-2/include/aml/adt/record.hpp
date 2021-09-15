@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <type_traits> // transitional solution
 
 #include "../dictionary.hpp"
 #include "../term_algebra.hpp"
@@ -16,7 +17,7 @@
 
 namespace aml::adt
 {
-    // indexed_type<Index, Type> is a wrapper that keeps an object of the type Type
+    // entry<Index, Type> is a wrapper that keeps an object of the type Type
     //
     // The kept object can be accessed by reference through the methods ref(), cref() and
     // rref()
@@ -24,10 +25,11 @@ namespace aml::adt
     template<  typename Index
             ,  typename Type
             >
-    struct indexed_type
+    struct entry
+    :     public aml::entry<Index, Type>
     {
     private:
-        using this_type = indexed_type<Index, Type>;
+        using this_type = entry<Index, Type>;
 
         Type type_;
 
@@ -42,32 +44,32 @@ namespace aml::adt
                                     ,  is_same<  list< Args... >, list< this_type && > >
                                     >::sfinae
                 >
-        explicit constexpr indexed_type( Args&&... args )  noexcept( noexcept( Type( static_cast<Args&&>(args)... ) ) )
+        explicit constexpr entry( Args&&... args )  noexcept( noexcept( Type( static_cast<Args&&>(args)... ) ) )
         :
             type_( static_cast< Args&& >(args)... )
         { }
 
 
-        indexed_type(indexed_type const&) = default;
+        entry(entry const&) = default;
 
-        indexed_type(indexed_type &&) = default;
+        entry(entry &&) = default;
 
         template< typename Type_ >
-        constexpr indexed_type(indexed_type<Index, Type_> const &  other )  noexcept( noexcept( Type( other.cref() ) ) )
+        constexpr entry(entry<Index, Type_> const &  other )  noexcept( noexcept( Type( other.cref() ) ) )
         :  type_( other.cref() )
         { }
 
 
         template< typename Type_ >
-        constexpr indexed_type(indexed_type<Index, Type_>&&  other )  noexcept( noexcept( Type( other.rref() ) ) )
+        constexpr entry(entry<Index, Type_>&&  other )  noexcept( noexcept( Type( other.rref() ) ) )
         :  type_( other.rref() )
         { }
 
 
-        constexpr indexed_type& operator=( indexed_type const& )   =  default;
+        constexpr entry& operator=( entry const& )   =  default;
 
 
-        constexpr indexed_type& operator=( indexed_type&&  other)  =  default;
+        constexpr entry& operator=( entry&&  other)  =  default;
 
 
         Type const &  cref() const  noexcept  { return type_; }
@@ -75,17 +77,24 @@ namespace aml::adt
         Type &        ref()         noexcept  { return type_; }
         Type &&       rref()        noexcept  { return static_cast<Type &&>(type_); }
 
-        friend bool operator==(indexed_type const& lhs, indexed_type const& rhs)
+        friend bool operator==(entry const& lhs, entry const& rhs)
         {
             return lhs.cref() == rhs.cref();
         }
 
-        friend bool operator!=(indexed_type const& lhs, indexed_type const& rhs)
+        friend bool operator!=(entry const& lhs, entry const& rhs)
         {
             return !(lhs == rhs);
         }
 
     };
+
+
+    template< typename Key, typename Ref>
+    constexpr auto field( Ref&& x )    noexcept(  noexcept(  entry<Key, std::decay_t<Ref> >( static_cast<Ref&&>(x) )  ) )
+    {
+        return entry<Key, std::decay_t<Ref> >( static_cast<Ref&&>(x) );
+    }
 
 
     // aml::entry< K, V > is a key-value-pair, defined in dictionary.hpp.
@@ -110,7 +119,7 @@ namespace aml::adt
     //
     template<  typename... Entry  >
     struct record
-    :    private indexed_type< typename Entry::key, typename Entry::value>...
+    :    private entry< typename Entry::key, typename Entry::value>...
     {
     private:
         using lookup_table  =  dictionary<Entry...>;
@@ -121,7 +130,7 @@ namespace aml::adt
         static_assert( lookup_table::size() == sizeof...(Entry) );
 
         template<typename Entry_>
-        using subtype  =  indexed_type< typename Entry_::key, typename Entry_::value >;
+        using subtype  =  entry< typename Entry_::key, typename Entry_::value >;
 
         using this_type = record< Entry... >;
 
@@ -285,9 +294,9 @@ namespace aml::adt
         friend constexpr bool operator==( record<Entry...> const& lhs,
                                           record<Entry...> const& rhs )
         {
-            return  ( (  static_cast< indexed_type< typename Entry::key, typename Entry::value> const&>(lhs)
+            return  ( (  static_cast< entry< typename Entry::key, typename Entry::value> const&>(lhs)
                          ==
-                         static_cast< indexed_type< typename Entry::key, typename Entry::value> const&>(rhs)
+                         static_cast< entry< typename Entry::key, typename Entry::value> const&>(rhs)
                       ) && ... );
             //            return ( (lhs.cref<typename Entry::key>() == rhs.cref<typename Entry::key>()) && ... );
         }
@@ -300,4 +309,18 @@ namespace aml::adt
             //            return ( (lhs.cref<typename Entry::key>() != rhs.cref<typename Entry::key>()) || ...  );
         }
     };
+
+
+    template<typename... EntryRef>
+    auto make_record(EntryRef&&... entry)
+    {
+        using record_t = record<  aml::entry<    typename std::decay_t<EntryRef>::key,
+                                                 typename std::decay_t<EntryRef>::value    >...
+                               >;
+
+        record_t result{static_cast<EntryRef&&>(entry)... };
+
+        return result;
+    }
+
 }

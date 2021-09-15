@@ -52,9 +52,9 @@ namespace test::record
     using has_move_assignment  =  decltype( has_move_assignment_<T>(nullptr, nullptr) );
 
 
-    void test_indexed_type()
+    void test_adt_entry()
     {
-        using indexed_t = aml::adt::indexed_type<hello, std::unique_ptr<std::string>>;
+        using indexed_t = aml::adt::entry<hello, std::unique_ptr<std::string>>;
 
         static_assert( has_copy_assignment<indexed_t>::eval() == false );
         static_assert( has_move_assignment<indexed_t>::eval() == true  );
@@ -74,14 +74,14 @@ namespace test::record
         assert( a.cref() == nullptr );
 
 
-        aml::adt::indexed_type<world, std::string> w1("hello");
-        aml::adt::indexed_type<world, std::string> w2("world");
+        aml::adt::entry<world, std::string> w1("hello");
+        aml::adt::entry<world, std::string> w2("world");
 
-        aml::adt::indexed_type<world, std::string> w3(w2);
+        aml::adt::entry<world, std::string> w3(w2);
 
         assert( static_cast<decltype(w2) const&>(w2).ref() == std::string("world") );
 
-        aml::adt::indexed_type<world, std::string> w4(std::move(w2));
+        aml::adt::entry<world, std::string> w4(std::move(w2));
 
         assert( w2.ref() == "" );
 
@@ -198,6 +198,27 @@ namespace test::record
         }
 
     }
+
+    void test_permuted_record()
+    {
+        struct tag;
+
+        using r3  =  aml::adt::record< aml::entry<hello, std::string>
+                                     , aml::entry<world, double >
+                                     , aml::entry<tag,   char >
+                                     >;
+
+        using r3p =  aml::adt::record< aml::entry<hello, std::string>
+                                     , aml::entry<tag,   char >
+                                     , aml::entry<world, double >
+                                     >;
+
+        r3  z0( "hello", 2.4, 'a' );
+        r3p z1( "hello", 'a', 2.4 );
+        //        r3  z3(z1);
+        r3 z3 = z1.extract<r3>();
+
+    }
 }
 
 
@@ -209,8 +230,9 @@ int main()
 {
     void (*test_set[])() =
     {
-     test::record::test_indexed_type,
+     test::record::test_adt_entry,
      test::record::test_record,
+     test::record::test_permuted_record
     };
 
 

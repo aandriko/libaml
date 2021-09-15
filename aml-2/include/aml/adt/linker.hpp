@@ -35,7 +35,7 @@ namespace aml::adt
         struct linker
         {
             template<typename Symbol>
-            using lookup  =  typename dictionary<SubType>::
+            using lookup  =  typename dictionary<SubType...>::
                              template lookup<Symbol>::
                              template apply_to<  linker<X...>,  X... >;
 
@@ -54,12 +54,19 @@ namespace aml::adt
             using record_t  =  record<  typename linker<X...>::
                                         template entry< typename SubType::key >...  >;
 
+            struct construct_from_permuted_record {};
+
+            template<typename Record>
+            adt(construct_from_permuted_record,  Record&& r)
+                : record_t( static_cast<Record&&>(r).template extract< record_t >() )
+            { }
+
         public:
 
-            using signature  =  adt::signature<SubType...>;
+            using signature  =  signature<SubType...>;
 
             template<typename Symbol>
-            using sub  =  typename linker<X...>::template lookup<Symbol>;
+            using sub  =  typename linker<X...>::template entry<Symbol>;
 
             adt()            =  default;
             adt(adt const&)  =  default;
@@ -68,12 +75,18 @@ namespace aml::adt
 
             template<typename... SubAdt>
             adt(SubAdt&&... sub_adt)
-                :  record_t( get_param_< typename SubType::key >(sub_adt...)... )
+                : adt( construct_from_permuted_record{}, make_record( static_cast<SubAdt&&>(sub_adt)... ) )
             { }
         };
 
-    }
+    };
+
+}
+
+
+/*
     
+
     template<typename... SubType>
     struct link
     {
@@ -213,3 +226,4 @@ namespace aml::adt
     };
 
 }
+*/

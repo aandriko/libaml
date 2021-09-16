@@ -10,21 +10,24 @@
 
 #pragma once
 
-#include "aml/basic_types.hpp"
-#include "aml/find.hpp"
-
+#include "./list.hpp"
+#include "./lazy_evaluation.hpp"
+#include "./logic.hpp"
 
 namespace aml
 {
     template < typename... Elements >
     struct set
     :
-        private hull< Elements >...
+        private lazy< Elements >...
     {
     private:
 
+        template< typename... >
+        friend struct set;
+
         template < typename X
-                 , typename = decltype(static_cast<hull<X>*> (static_cast< set< Elements... >* >(nullptr)))
+                 , typename = decltype(static_cast<lazy<X>*> (static_cast< set< Elements... >* >(nullptr)))
                  >
         static true_ contains_element_(decltype(nullptr), decltype(nullptr));
 
@@ -39,63 +42,85 @@ namespace aml
             using type = all< decltype(contains_element_< X >(nullptr, nullptr))... >;
         };
 
-
-        template < typename X
-                 , typename R = set< Elements..., X >
-                 >
-        static R add_element_(decltype(nullptr), decltype(nullptr));
-
+        template<typename...>
+        friend class add_elements_to_set_;
 
         template < typename X >
-        static set< Elements... > add_element_(decltype(nullptr), ... );
+        static aml::list<Elements..., X> add_element_(decltype(nullptr), ... );
 
 
-        template < typename List
-                 , typename X
-                 >
-        using add_element_to_list_rep  =  typename decltype( List::
-                                                             template apply< set >::
-                                                             template add_element_< X >(nullptr, nullptr) )
-                                                   ::list;
+        template< typename X
+                , typename  =  typename decltype( contains_element_<X>(nullptr, nullptr) )::sfinae
+                >
+        static aml::list< Elements... > add_element_(decltype(nullptr), decltype(nullptr) );
+
+
+        template < typename... Y >
+        struct add_elements_to_set_
+        {
+
+            template < typename List
+                       , typename X
+                       >
+            using add_element_to_list_rep  =   decltype( List::
+                                                                 template apply< set >::
+                                                                 template add_element_< X >(nullptr, nullptr) ); //::list;
+
+
+            using type  =  typename aml::list<Y...>::
+                           template lfold_with< add_element_to_list_rep, aml::list<Elements...> >::
+                           template apply< set >;
+        };
+
 
     public:
 
         static constexpr auto size() { return sizeof...(Elements); }
 
+        constexpr set()            =  default;
+        constexpr set(set const&)  =  default;
 
-        using list = conslist< Elements... >;
+
+        using list = aml::list< Elements... >;
 
 
         template < typename... Y >
-        using add_elements  =  typename conslist< Y... >::
-                               template lfold_with< add_element_to_list_rep, list >::
-                               template apply< set >;
+        using add_elements  =  typename add_elements_to_set_<Y...>::type;
 
 
         template< typename... X >
-        using contains = all< typename contains_< X >::type... >;
+        using contains  =  typename contains_< X... >::type;
 
 
         template < typename... X >
-        using contains_one_of = one< contains< X >... >;
+        using contains_any_of = any< contains< X >... >;
 
 
         template < typename... X >
         using contains_none_of = none< contains< X >... >;
 
 
-        template< template<typename...> class Pred >
-        using subset_by_predicate  =  typename find< Pred >::
-                                      template in< Elements... >::
+        template<  template< typename... > class Pred  >
+        using subset_by_predicate  =  typename list::
+                                      template partition_with< Pred >::
                                       accepted::
                                       template apply< set >;
 
+
+        template< typename... X >
+        using remove_elements  =  subset_by_predicate<
+
+                predicates::none<    curry_and_bind< is_same, X >::template apply_to...    >::template apply_to
+
+                                                     >;
+
         // intersection
+        template<typename... Y>
+        auto operator&(set< Y... >)    ->    subset_by_predicate< set<Y...>::template contains >;
+
+
         template< typename... Y >
-        auto operator&(set< Y... >)    ->    typename find< set< Elements... >::template contains >::
-                                             template in< Y... >::
-                                             accepted::
-                                             template apply< set >;
+        auto operator-(set< Y... >)    ->    subset_by_predicate< set<Y...>::template contains_none_of >;
 
 
         // union
@@ -103,54 +128,46 @@ namespace aml
         auto operator|(set< Y... >)    ->    typename set< Elements... >::template add_elements< Y... >;
 
 
-        template< typename... Y >
-        auto operator-(set< Y... >)    ->    typename find< set< Elements... >::template contains >::
-                                             template in< Y... >::
-                                             rejected::
-                                             template apply< set >;
+        template < typename... Y >
+        constexpr bool operator<=(set< Y... >)
+        {
+            return set< Y... >::template contains< Elements... >::eval();
+        }
 
 
         template < typename... Y >
-        auto operator<=(set< Y... >)    ->    typename set< Y... >::
-                                              template contains< Elements... >;
+        constexpr bool operator>=(set< Y... > other)
+        {
+            return other <= *this;
+        }
 
 
         template < typename... Y >
-        auto operator>=(set< Y... >)    ->    typename set< Elements... >::
-                                              template contains< Y... >;
+        constexpr bool operator==(set< Y... > other)
+        {
+            return *this <= other  &&  other <= *this;
+        }
 
 
         template < typename... Y >
-        auto operator==(set< Y... >)    ->    all
-                                              <
-                                                  typename set< Y... >::template contains< Elements... >,
-                                                  typename set< Elements... >::template contains< Y... >
-                                              >;
+        constexpr bool operator!=(set< Y... > other)
+        {
+            return ! (*this == other );
+        }
 
 
         template < typename... Y >
-        auto operator!=(set< Y... >)    ->    all
-                                              <
-                                                  none< typename set< Y... >::template contains< Elements... > >,
-                                                  none< typename set< Elements... >::template contains< Y... > >
-                                              >;
+        constexpr bool operator<(set< Y... > other)
+        {
+            return ! (*this >= other);
+        }
 
 
         template < typename... Y >
-        auto operator<(set< Y... >)    ->     all
-                                              <
-                                                  typename set< Y... >::template contains< Elements... >,
-                                                  none<typename set< Elements... >::template contains< Y... > >
-                                              >;
-
-
-        template < typename... Y >
-        auto operator>(set< Y... >)    ->    all
-                                             <
-                                                 typename set< Elements... >::template contains< Y... >,
-                                                 none< typename set< Y... >::template contains< Elements... > >
-                                             >;
-
+        constexpr bool operator>(set< Y... > other)
+        {
+            return !(*this <= other);
+        }
     };
 
 }

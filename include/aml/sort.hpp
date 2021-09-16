@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include "./partition.hpp"
-#include "./basic_types.hpp"
-
 namespace aml
 {
+    template< typename... >
+    struct list;
+
     template<typename...>
     struct sort;
 
@@ -22,116 +22,137 @@ namespace aml
     template<>
     struct sort<>
     {
-        template<template<typename...> class>
-        using with = sort<>;
-
     private:
+
         template<typename...>
         friend struct sort;
 
 
-        template<int n, typename T>
-        struct stabilizer
+        template< template<typename...> class Less
+                , typename Result
+                , typename Left
+                , typename Right
+                >
+        struct merge_;
+
+
+        template< template<typename...> class Less
+                , typename Result
+                , typename Left
+                , typename Right
+                >
+        struct merge_two_non_empty_lists_
         {
-            static constexpr int rk() { return n; }
-            using type = T;
-        };
 
-
-        template<typename X, typename ConsList>
-        using apply_stabilizer = typename ConsList::template cons< stabilizer<ConsList::size(), X> >;
-
-
-        template<typename X, typename ConsList>
-        using remove_stabilizer = typename ConsList::template cons<typename X::type>;
-
-
-        template<template<typename...> class Less>
-        struct fix_comparison
-        {
-            template<typename... Args>
-            struct sort_non_empty_list;
-
-
-            template<typename... Args>
-            struct lazy_sort
+            struct cut_left
             {
-                using type = typename conditional
-                                      <
-                                          bool_<sizeof...(Args) == 0>,
+                using type = typename merge_<   Less
+                                            ,   typename Result::template rcons<typename Left::head>
+                                            ,   typename Left::tail
+                                            ,   Right
+                                            >::type;
+            };
 
-                                          hull<conslist<>>,
-
-                                          sort_non_empty_list<Args...>
-
-                    >::type;
+            struct cut_right
+            {
+                using type = typename merge_<   Less
+                                            ,   typename Result::template rcons<typename Right::head>
+                                            ,   Left
+                                            ,   typename Right::tail
+                                            >::type;
             };
 
 
-            template<typename... Args>
-            struct sort_non_empty_list
+
+            using type = typename bool_< ! Less< typename Right::head, typename Left::head >::eval() >::
+                         template conditional<    cut_left,  // left::head <= right::head
+                                                  cut_right  // left::head > right::head
+                                             >::type;
+        };
+
+
+        template< typename Result
+                , typename Left
+                , typename Right
+                >
+        struct one_side_empty_
+        {
+            using type  =  typename Result::
+                           template apply< Left::template cons >::
+                           template apply< Right::template cons >;
+        };
+
+
+        template< template<typename...> class Less
+                , typename Result
+                , typename Left
+                , typename Right
+                >
+        struct merge_
+        {
+            using type  =  typename bool_< Left::size() == 0 || Right::size() == 0>::
+                           template conditional<  one_side_empty_<Result, Left, Right>
+                                               ,  merge_two_non_empty_lists_<Less, Result, Left, Right>
+                                               >::type;
+        };
+
+
+        template< template<typename...> class Less >
+        struct bind_less
+        {
+            template<typename... X>
+            struct merge_sort_;
+
+
+            template<typename... X>
+            struct sort_more_than_one_
             {
-                using pivot = typename conslist<Args...>::head;
-                using tail  = typename conslist<Args...>::tail;
+                using left   =  typename list<X...>::
+                                template take<  _<sizeof...(X)/2>  >::
+                                template apply<merge_sort_>::type;
 
-                template<typename X>
-                struct predicate
-                {
+                using right  =  typename list<X...>::
+                                template drop<  _<sizeof...(X)/2>  >::
+                                template apply<merge_sort_>::type;
 
-                    static constexpr bool eval()
-                    {
-                        return
+                static_assert( sizeof...(X) == left::size() + right::size() );
 
-                            Less< typename X::type, typename pivot::type >::eval()
-                            ||
-                            (
-                             ! Less< typename     X::type, typename pivot::type >::eval()  &&
-                             ! Less< typename pivot::type, typename     X::type >::eval()  &&
-                             X::rk() < pivot::rk()
-
-                             );
-                    };
-                };
-
-                using partition_t = typename tail::template apply<aml::partition>::template with<predicate>;
-
-
-                using type = aml::join
-                             <
-                                 typename partition_t::accepted::template apply<lazy_sort>::type,
-
-                                 conslist<pivot>,
-
-                                 typename partition_t::rejected::template apply<lazy_sort>::type
-                             >;
-
+                using type   =  typename merge_<Less, list<>, left, right>::type;
             };
 
-            template<typename... Args>
-            using sort = typename lazy_sort<Args...>::type;
 
+            template<typename... X>
+            struct sort_one_or_less_
+            {
+                static_assert(sizeof...(X) <= 1);
+                using type  =  list<X...>;
+            };
+
+
+            template< typename... X >
+            struct merge_sort_
+            {
+                using type  =  typename bool_< (sizeof...(X) > 1) >::
+                               template conditional< sort_more_than_one_<X...>, sort_one_or_less_<X...> >::type;
+
+            };
         };
+
+    public:
+
+        template<  template<typename...> class  >
+        using with = list<>;
+
     };
 
 
-    template<typename H, typename... T>
-    struct sort<H, T...>
+    template< typename... X >
+    struct sort
     {
-        template<template<typename...> class Less>
-        using with = typename conslist<H, T...>::reverse
-
-                                               ::template rfold_with
-                                                          <
-                                                              sort<>::template apply_stabilizer,
-
-                                                              conslist<>
-
-                                                          >
-                                                ::reverse
-
-                                                ::template apply< sort<>::template fix_comparison<Less>::template sort >
-
-                                                ::template rfold_with<sort<>::template remove_stabilizer, conslist<>>;
-
+        template<  template< typename... > class Less  >
+        using with  =  typename sort<>::template bind_less<Less>::template merge_sort_<X...>::type;
     };
+
 }
+
+#include "./list.hpp"

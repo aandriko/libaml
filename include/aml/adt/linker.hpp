@@ -77,6 +77,58 @@ namespace aml::adt
             adt(SubAdt&&... sub_adt)
                 : adt( construct_from_permuted_record{}, make_record( static_cast<SubAdt&&>(sub_adt)... ) )
             { }
+
+
+            record_t const& record() const &   { return static_cast<record_t const&>(*this); }
+            record_t&&      record()       &&  { return static_cast<record_t&&>(*this); }
+            record_t&       record()       &   { return static_cast<record_t&>(*this); }
+            record_t const& crecord() const    { return static_cast<record_t const&>(*this); }
+
+            template< typename T >
+            auto const& cref()  const &
+            {
+                return record().template cref< std::decay_t<T> >();
+            }
+
+
+            template< typename T >
+            auto const& ref()  const &
+            {
+                return cref<T>();
+            }
+
+
+            template< typename T >
+            auto& ref()  &
+            {
+                return record().template ref<T>();
+            }
+
+
+            template< typename T >
+            auto&& rref()
+            {
+                return record().template rref< std::decay_t<T> >();
+            }
+
+
+            template< typename T >
+            auto&& ref() &&
+            {
+                return record().template rref< std::decay_t<T> >();
+            }
+
+
+            friend bool operator==(adt const& lhs, adt const& rhs)
+            {
+                return lhs.crecord() == rhs.crecord();
+            }
+
+
+            friend bool operator!=(adt const& lhs, adt const& rhs)
+            {
+                return ! ( lhs == rhs );
+            }
         };
 
     };

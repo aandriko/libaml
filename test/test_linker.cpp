@@ -8,54 +8,106 @@
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include "aml/structure/conslist_structure.hpp"
-#include "aml/structure/select_indices_structure.hpp"
-#include "aml/structure/term_structure.hpp"
 
-#include "aml/exponent.hpp"
-#include "aml/string.hpp"
+#include "aml/adt/linker.hpp"
 
-#include "aml/linker.hpp"
 
-#include <iostream>
 #include <type_traits>
 
+#include <iostream>
 #include <boost/core/demangle.hpp>
 
-using aml::operator""_;
+#include <string>
+#include <memory>
+
+#include <cassert>
+#include <vector>
+#include <tuple>
 
 
-namespace test::linker
+namespace test::adt
 {
-    template<typename... X>
-    using array = typename
-        aml::signatures
-        <
-        aml::subtype<decltype("list"_), aml::structure::list>,
-
-        aml::subtype<decltype("random_access"_), aml::structure::array>
-
-        //                    aml::subtype<decltype("term"_), aml::structure::term>
-
-        >::template link_with<X...>;
-
-    void t0()
+    template<typename Linker, typename... Value>
+    struct Vector : public std::vector<Value...>
     {
-        using t = array<int, double, void*>;
+        Vector() :    std::vector<Value...>() {}
 
-        //        static_assert(std::is_same<t::at<2>, void*>::value, "");
-        std::cout << boost::core::demangle(typeid( t::tail ).name() ) << std::endl;
 
-        //        static_assert(std::is_same< t::tail::at<1>, void*>::value, "");
+        Vector(std::initializer_list<Value...> l )
+        :    std::vector<Value...>(l)
+        { }
+
+
+        Vector(Vector const& other)
+        :    std::vector<Value...>(other)
+        {
+            std::cout << "copy constructing! " << std::endl;
+        }
+
+
+        Vector(Vector && other)
+        :    std::vector<Value...>(std::move(other))
+        {
+            std::cout << "move constructing! " << std::endl;
+        }
+
+
+        Vector& operator=(std::vector<Value...> const& other)
+        {
+            static_cast< std::vector<Value... >& >(*this) = static_cast< std::vector<Value...> const&>(other);
+            return *this;
+        }
+
+
+        Vector& operator=(std::vector<Value...>&& other)
+        {
+            static_cast< std::vector<Value... >& >(*this) = static_cast< std::vector<Value...> &&>(other);
+            return *this;
+        }
+
+    };
+
+
+    struct t1 { t1() = default; };
+    struct t2 { t2() = default; };
+
+    template<typename... X>
+    using vec_adt  =  typename aml::adt::signature<  aml::adt::subtype<t1, Vector>,  aml::adt::subtype<t2, Vector > >::
+                      template adt<X...>;
+
+
+    void test_constructor()
+    {
+        vec_adt<double> v;
+        v.ref< t1 >() = std::vector<double>{-1.1, -2.2, -3.3 };
+
+        auto show = []( auto const& v )
+        {
+            for (auto const& el : v)
+            {
+                std::cout << el << " : " ;
+            }
+            std::cout << std::endl << std::endl;
+        };
+
+        show( v.ref<t1>() );
+
+        //        auto w(v);
     }
 
 }
 
+#include <iostream>
+#include <string>
 
 
 int main()
 {
-    void (*test_set[])() = { test::linker::t0 };
+    void (*test_set[])() =
+    {
+        test::adt::test_constructor
+    };
+
 
     for ( auto test : test_set )
         test();
@@ -63,3 +115,7 @@ int main()
     std::cout << __FILE__ << ": " << sizeof(test_set)/sizeof(test_set[0])  << " tests passed." << std::endl;
 
 }
+
+
+
+

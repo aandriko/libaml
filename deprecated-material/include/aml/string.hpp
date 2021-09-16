@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "./object.hpp"
+#include "./basic_types.hpp"
 
 namespace aml
 {

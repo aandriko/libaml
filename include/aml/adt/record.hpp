@@ -217,16 +217,6 @@ namespace aml::adt
         constexpr record& operator=(record&& )      =  default;
 
 
-        template< typename Key >
-        constexpr auto const& cref() const  noexcept
-        {
-            using value_t   =  typename lookup_table::template lookup< Key >;
-            using return_t  =  subtype<  aml::entry< Key, value_t >  > const &;
-
-            return static_cast< return_t >(*this).cref();
-        }
-
-
         template< typename... Entry_ >
         constexpr record<Entry...>& operator=( record<Entry_...> const& other )
         // noexcept specification missing
@@ -242,6 +232,17 @@ namespace aml::adt
             *this = record<Entry...>( static_cast<record<Entry_...>&&>(other) );
             return *this;
         }
+
+
+        template< typename Key >
+        constexpr auto const& cref() const  noexcept
+        {
+            using value_t   =  typename lookup_table::template lookup< Key >;
+            using return_t  =  subtype<  aml::entry< Key, value_t >  > const &;
+
+            return static_cast< return_t >(*this).cref();
+        }
+
 
 
         template< typename Key >

@@ -73,7 +73,14 @@ namespace aml::adt
             adt(adt&& )      =  default;
 
 
-            template<typename... SubAdt>
+            template<  typename... SubAdt,
+                       // sfinae away the case when the default copy- or move-constructor shall be called
+                       typename  =  typename bool_<    ! std::is_same< list<SubAdt&&... >, list< adt const&   > >::value &&
+                                                       ! std::is_same< list<SubAdt&&... >, list< adt &        > >::value &&
+                                                       ! std::is_same< list<SubAdt&&... >, list< adt const && > >::value &&
+                                                       ! std::is_same< list<SubAdt&&... >, list< adt &&       > >::value
+                                                  >::sfinae
+                    >
             adt(SubAdt&&... sub_adt)
                 : adt( construct_from_permuted_record{}, make_record( static_cast<SubAdt&&>(sub_adt)... ) )
             { }

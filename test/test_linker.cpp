@@ -76,6 +76,12 @@ namespace test::adt
                       template adt<X...>;
 
 
+    template< typename... X >
+    using vec_adt_permuted  =
+                      typename aml::adt::signature<  aml::adt::subtype<t2, Vector>,  aml::adt::subtype<t1, Vector > >::
+                      template adt<X...>;
+
+
     void test_constructor()
     {
         vec_adt<double> v;
@@ -92,7 +98,10 @@ namespace test::adt
 
         show( v.ref<t1>() );
 
-        //        auto w(v);
+        auto w(v);
+        auto z(std::move(v));
+
+        assert(w == z);
     }
 
 }
